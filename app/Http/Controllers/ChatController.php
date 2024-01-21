@@ -23,7 +23,7 @@ class ChatController extends BaseController
         // get all room id of this user
         $authUserId = Auth::user()->id;
 
-        if (!isset($_GET['search'])) {
+        if (empty($_GET['search']) || !isset($_GET['search'])) {
             $authUser = User::find($authUserId);
             $user_rooms_id = $authUser->getRoomsByParticipants($authUserId);
             // join all user id and room_name of each room
@@ -65,8 +65,9 @@ class ChatController extends BaseController
             // roomNameByRoomId
             $spec_room = ChatRoom::where('room_id', $first_room_id)->first();
             //if not exist => create new one
-            if (!$spec_room) {
-                $spec_room = $this->createRoomBy2UserId($_GET['otherId'], $authUserId, $first_room_id);
+            if ($spec_room == null) {
+
+                $spec_room = $this->createRoomBy2UserId($_GET['otherId'], $authUserId, intval($first_room_id));
             }
             $chatsInRoom = $spec_room->getChatsInRoomModel(intval($first_room_id)) ?? null;
             $chats = $chatsInRoom['chats'];
@@ -74,11 +75,10 @@ class ChatController extends BaseController
             $room_id = $chatsInRoom['room_id'];
             $roomNameByRoomId = $chatsInRoom['roomNameByRoomId'];
             // dd($chats);
-
             return view('chat.index', compact('chats', 'usersInRoom', 'room_id', 'userRooms', 'roomNameByRoomId'));
         } else {
 
-
+            $room_id =intval($room_id_param);
 
             //search logic
             $authUser = User::find($authUserId);
@@ -86,6 +86,7 @@ class ChatController extends BaseController
             // get all user match search param and number count <= 2, if not exist => get by room_name
             $users = $authUser->getRoomsBySearchParams($authUserId, $searchTerm);
             // trường hợp group chat
+
             if ( isset($users['room_type'] ) && $users['room_type'] == 'group') {
                 //get latest chat
 
@@ -103,8 +104,12 @@ class ChatController extends BaseController
                 $searchUsers =$users->sortByDesc(function ($user) {
                     return optional($user->latestChat->id ?? null);
                 });
+                $first_room_id = $users[0]->room_id ?? null;
 
-                return view('chat.index', compact('searchUsers'));
+                $spec_room = ChatRoom::where('room_id', $first_room_id)->first();
+                $chatsInRoom = $spec_room->getChatsInRoomModel(intval($first_room_id)) ?? null;
+                $chats = $chatsInRoom['chats'] ?? [];
+                return view('chat.index', compact('searchUsers', 'room_id','chats'));
 
 
             }else {
@@ -116,11 +121,15 @@ class ChatController extends BaseController
                 $latestChat = $user->getLatestChat(isset($user->chatRoom[0]->room_id) ?$user->chatRoom[0]->room_id  : null);
                 $user->latestChat = $latestChat;
             }
+            $first_room_id = $users[0]->chatRoom[0]->room_id ?? null;
+
+            $spec_room = ChatRoom::where('room_id', $first_room_id)->first();
+            $chatsInRoom = $spec_room->getChatsInRoomModel(intval($first_room_id)) ?? null;
+            $chats = $chatsInRoom['chats'] ?? [];
             $searchUsers = $users->sortByDesc(function ($user) {
                 return optional($user->latestChat->id ?? null);
             });
-            // dd($searchUsers);
-            return view('chat.index', compact('searchUsers'));
+            return view('chat.index', compact('searchUsers', 'room_id', 'chats'));
             }
 
         }
@@ -164,12 +173,9 @@ class ChatController extends BaseController
 
         DB::table('chat_room')->insert($data);
 
-        $latestChat = DB::table('chat')
-            ->where('room_id', $room_id)
-            ->orderBy('created_at', 'desc')
-            ->first();
+       $new_room = ChatRoom::where('room_id', $room_id)->first();
 
-        return $latestChat;
+        return $new_room;
     }
     public function getLatestChat($roomId)
     {

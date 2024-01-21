@@ -136,7 +136,7 @@ public function getRoomsBySearchParams($authId, $searchTerm)
     if ($users->isEmpty()) {
         $chatRooms = ChatRoom::where('room_name', 'like', '%' . $searchTerm . '%')
         ->leftJoin('users', 'chat_room.user_id', '=', 'users.id')
-        ->select('chat_room.room_id', 'users.*')
+        ->select('chat_room.room_id', 'users.*','chat_room.room_name as name')
         ->groupBy('chat_room.room_id')
         ->get();
 

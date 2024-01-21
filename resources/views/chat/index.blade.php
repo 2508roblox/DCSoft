@@ -46,7 +46,7 @@
                             </div>
 
                             <!-- start search box -->
-                            <form method="get" id="task_form" accept-charset="UTF-8" enctype="multipart/form-data">
+                            <form method="get" action="{{route('chat.index')}}" id="task_form" accept-charset="UTF-8" enctype="multipart/form-data">
                                 <div class="position-relative" style="display: flex">
                                     <input name="search" type="text" class="form-control form-control-light"
                                         value="{{ $_GET['search'] ?? '' }}" placeholder="People, groups & messages...">
@@ -68,8 +68,10 @@
 
 
                                     <div data-simplebar style="max-height: 498px">
+                                        {{-- own chat room --}}
                                         @isset($userRooms)
-                                            @forelse ($userRooms as $roomId  =>  $room)
+                                        @forelse ($userRooms as $roomId  =>  $room)
+
                                                 <a href="{{ route('chat.room', ['room_id' => $roomId ?? mt_rand()]) }}"
                                                     class="text-body">
                                                     <div class="d-flex align-items-start p-2">
@@ -124,8 +126,9 @@
                                                             <p class="mt-1 mb-0 text-muted font-14">
                                                                 <span class="w-25 float-end text-end"><span
                                                                         class="badge badge-soft-danger">3</span></span>
+
                                                                 <span
-                                                                    class="w-75">{{ $room->latestChat->note ?? 'Start new conversation' }}</span>
+                                                                    class="w-75">{{ $room['latest_chat']->note ?? 'Start new conversation' }}</span>
                                                             </p>
                                                         </div>
                                                     </div>
@@ -134,8 +137,11 @@
                                                 <p>Nothing</p>
                                             @endforelse
                                         @endisset
+
+
                                         @isset($sortedUsers)
                                             @forelse ($sortedUsers as $user)
+                                            @dd($user)
                                                 <a href="{{ route('chat.room', ['room_id' => $user ?? mt_rand()]) }}"
                                                     class="text-body">
                                                     <div class="d-flex align-items-start p-2">
@@ -187,7 +193,10 @@
                                                 <p>Nothing</p>
                                             @endforelse
                                         @endisset
+                                        {{-- search public room --}}     {{-- search private chat room --}}
+
                                         @isset($searchUsers)
+
                                             @forelse ($searchUsers as $user)
                                                 <?php
 
@@ -204,7 +213,7 @@
                                                     <a href="{{ route('chat.room', ['room_id' => $roomId]) }}"
                                                         class="text-body">
                                                     @elseif(!isset($user['room_type']))
-                                                        {{-- <a href="{{ route('chat.room', ['room_id' => $roomId, 'otherId' =>  $user->id] ) }}" class="text-body"> --}}
+                                                        <a href="{{ route('chat.room', ['room_id' => $roomId, 'otherId' =>  $user->id] ) }}" class="text-body">
                                                 @endif
                                                 <div class="d-flex align-items-start p-2">
                                                     <div class="position-relative">
@@ -240,8 +249,14 @@
                                                         <p class="mt-1 mb-0 text-muted font-14">
                                                             <span class="w-25 float-end text-end"><span
                                                                     class="badge badge-soft-danger">3</span></span>
-                                                            <span
-                                                                class="w-75">{{ $room->latestChat->note ?? 'Start new conversation' }}</span>
+
+                                                            @if ($user->latestChat->note ?? null)
+                                                            <span  class="w-75">{{ $user->latestChat->note ?? 'Start new conversation' }}</span>
+
+                                                            @else
+                                                            <span  class="w-75">{{ $user->latestChat ?? 'Start new conversation' }}</span>
+
+                                                            @endif
                                                         </p>
                                                     </div>
                                                 </div>
@@ -273,7 +288,7 @@
                                 <div class="flex-1">
                                     <h5 class="mt-0 mb-0 font-15">
                                         <a href="contacts-profile.html"
-                                            class="text-reset">{{ $roomNameByRoomId ?? null }}</a>
+                                            class="text-reset">{{ $roomNameByRoomId ?? $searchUsers[0]->name }}</a>
                                     </h5>
                                     <p class="mt-1 mb-0 text-muted font-12">
                                         <small class="mdi mdi-circle text-success"></small> Online
@@ -305,7 +320,7 @@
 
                                 @isset($chats)
                                     @forelse ($chats as $chat)
-                                        @if ($chat->sender_id != Auth::user()->id)
+                                            @if ($chat->sender_id != Auth::user()->id)
                                             <li class="clearfix">
                                                 <div class="chat-avatar">
                                                     <img src="/assets/images/users/avatar-5.jpg" class="rounded"

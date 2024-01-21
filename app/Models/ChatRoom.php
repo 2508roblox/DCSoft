@@ -28,7 +28,6 @@ class ChatRoom extends Model {
         $chats = ChatMission::where('room_id', $room_id)
             ->join('users', 'chat.sender_id', '=', 'users.id')
             ->get();
-
         $usersInRoom = [];
         //get room info
         $latestChat = DB::table('chat')
@@ -54,7 +53,7 @@ class ChatRoom extends Model {
         // get all room id of this user
         $authUserId = Auth::user()->id;
 
-        if (!isset($_GET['search'])) {
+
             $authUser = User::find($authUserId);
             $user_rooms_id = $authUser->getRoomsByParticipants($authUserId);
             // join all user id and room_name of each room
@@ -94,6 +93,7 @@ class ChatRoom extends Model {
                 }
             }
 
+
             // userRooms is list of rooms and members
             return [
                 'chats' => $chats,
@@ -102,46 +102,7 @@ class ChatRoom extends Model {
                 'userRooms' => $userRooms,
                 'roomNameByRoomId' => $roomNameByRoomId
             ];
-
-            // $authUserId = Auth::user()->id;
-            // if (isset($_GET['search'])) {
-            //     $searchTerm = $_GET['search'];
-            //     $users = User::where('id', '!=', $authUserId)->where('name', 'like', '%' . $searchTerm . '%')->get();
-            // } else {
-            //     $users = User::where('id', '!=', $authUserId)->get();
-            // }
-            // foreach ($users as $user) {
-            //     $chatRoom = $user->getChatRoom($user->id, $authUserId);
-            //     $user->chatRoom = $chatRoom;
-            //     $latestChat = $user->getLatestChat($user->chatRoom->room_id ?? null, $user->id);
-            //     $user->latestChat = $latestChat;
-            // }
-            // $sortedUsers = $users->sortByDesc(function ($user) {
-            //     return optional($user->latestChat->id ?? null);
-            // });
-
-            // //get room and chats and other user
-            // $select_room  = ChatRoom::where('room_id', intval($room_id))->get();
-            // $otherUser  = User::find($_GET['other_id']);
-            // // $room_id = mt_rand(); // Tạo một room_id ngẫu nhiên
-            // if ($select_room->isEmpty()) {
-
-            //     // Tạo chat room thứ nhất
-            //     $newChatRoom1 = new ChatRoom();
-            //     $newChatRoom1->user_id = $_GET['other_id'];
-            //     $newChatRoom1->room_id = $room_id;
-            //     $newChatRoom1->save();
-
-            //     // Tạo chat room thứ hai
-            //     $newChatRoom2 = new ChatRoom();
-            //     $newChatRoom2->user_id = $authUserId;
-            //     $newChatRoom2->room_id = $room_id;
-            //     $newChatRoom2->save();
-            // }
-            // $chats = ChatMission::where('room_id', $room_id)->get();
-
-            // return view('chat.index', compact('sortedUsers', 'chats', 'otherUser', 'room_id'));
-        }
+ 
     }
 
 
