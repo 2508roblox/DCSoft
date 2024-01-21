@@ -21,56 +21,60 @@ class ChatController extends BaseController
     {
         // get all room id of this user
         $authUserId = Auth::user()->id;
-        $authUser = User::find($authUserId);
-        $user_rooms_id = $authUser->getRoomsByParticipants($authUserId);
-        // join all user id and room_name of each room
 
-$userRooms = [];
+        if (!isset($_GET['search'])) {
+            $authUser = User::find($authUserId);
+            $user_rooms_id = $authUser->getRoomsByParticipants($authUserId);
+            // join all user id and room_name of each room
 
-
-foreach ($user_rooms_id as $roomId) {
-    $latestChat = DB::table('chat')
-        ->where('room_id', $roomId)
-        ->orderBy('created_at', 'desc')
-        ->first();
-
-    $userRoom = DB::table('users')
-        ->join('chat_room', 'users.id', '=', 'chat_room.user_id')
-        ->where('chat_room.room_id', $roomId)
-        ->select('users.*', 'chat_room.room_name as room_name')
-        ->get();
-
-    $userRooms[$roomId] = [
-        'latest_chat' => $latestChat,
-        'users' => $userRoom
-    ];
-}
-
-dd($userRooms);
+            $userRooms = [];
 
 
-        //search logic
+            foreach ($user_rooms_id as $roomId) {
+                $latestChat = DB::table('chat')
+                    ->where('room_id', $roomId)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
 
-        if (isset($_GET['search'])) {
-            $searchTerm = $_GET['search'];
-            $users = User::where('id', '!=', $authUserId)->where('name', 'like', '%' . $searchTerm . '%')->get();
-        }else {
-            $users = User::where('id', '!=', $authUserId)->get();
+                $userRoom = DB::table('users')
+                    ->join('chat_room', 'users.id', '=', 'chat_room.user_id')
+                    ->where('chat_room.room_id', $roomId)
+                    ->select('users.*', 'chat_room.room_name as room_name')
+                    ->get();
+
+                $userRooms[$roomId] = [
+                    'latest_chat' => $latestChat,
+                    'users' => $userRoom
+                ];
+            }
+            return view('chat.index', compact('userRooms'));
+        } else {
+
+
+
+            //search logic
+
+            if (isset($_GET['search'])) {
+                $searchTerm = $_GET['search'];
+                $users = User::where('id', '!=', $authUserId)->where('name', 'like', '%' . $searchTerm . '%')->get();
+            } else {
+                $users = User::where('id', '!=', $authUserId)->get();
+            }
+
+
+            foreach ($users as $user) {
+                $chatRoom = $user->getChatRoom($user->id, $authUserId);
+                $user->chatRoom = $chatRoom;
+                $latestChat = $user->getLatestChat($user->chatRoom->room_id ?? null);
+                $user->latestChat = $latestChat;
+            }
+            $sortedUsers = $users->sortByDesc(function ($user) {
+                return optional($user->latestChat->id ?? null);
+            });
+            return view('chat.index', compact('sortedUsers'));
         }
-
-
-        foreach ($users as $user) {
-            $chatRoom = $user->getChatRoom($user->id, $authUserId);
-            $user->chatRoom = $chatRoom;
-            $latestChat = $user->getLatestChat($user->chatRoom->room_id ?? null );
-            $user->latestChat = $latestChat;
-        }
-        $sortedUsers = $users->sortByDesc(function ($user) {
-            return optional($user->latestChat->id ?? null) ;
-        });
-        return view('chat.index', compact('sortedUsers'));
     }
-    public function getChatsInRoom(  $room_id )
+    public function getChatsInRoom($room_id)
     {
 
 
@@ -78,7 +82,7 @@ dd($userRooms);
         if (isset($_GET['search'])) {
             $searchTerm = $_GET['search'];
             $users = User::where('id', '!=', $authUserId)->where('name', 'like', '%' . $searchTerm . '%')->get();
-        }else {
+        } else {
             $users = User::where('id', '!=', $authUserId)->get();
         }
         foreach ($users as $user) {
@@ -88,12 +92,12 @@ dd($userRooms);
             $user->latestChat = $latestChat;
         }
         $sortedUsers = $users->sortByDesc(function ($user) {
-            return optional($user->latestChat->id ?? null) ;
+            return optional($user->latestChat->id ?? null);
         });
 
         //get room and chats and other user
-        $select_room  = ChatRoom::where( 'room_id' ,intval($room_id))->get();
-        $otherUser  = User::find( $_GET['other_id']);
+        $select_room  = ChatRoom::where('room_id', intval($room_id))->get();
+        $otherUser  = User::find($_GET['other_id']);
         // $room_id = mt_rand(); // Tạo một room_id ngẫu nhiên
         if ($select_room->isEmpty()) {
 
@@ -111,16 +115,16 @@ dd($userRooms);
         }
         $chats = ChatMission::where('room_id', $room_id)->get();
 
-        return view('chat.index', compact('sortedUsers', 'chats', 'otherUser','room_id'));
+        return view('chat.index', compact('sortedUsers', 'chats', 'otherUser', 'room_id'));
     }
-    public function store( Request $request )
+    public function store(Request $request)
     {
         $sender_id = Auth::user()->id;
         $newChatMission = ChatMission::create([
-			'sender_id' => $sender_id,
-			'room_id' =>  $request->input('room_id'),
-			'note' =>  $request->input('note')
-		]);
+            'sender_id' => $sender_id,
+            'room_id' =>  $request->input('room_id'),
+            'note' =>  $request->input('note')
+        ]);
         return redirect()->back();
     }
 }

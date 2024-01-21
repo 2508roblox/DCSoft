@@ -68,8 +68,8 @@
 
 
                                     <div data-simplebar style="max-height: 498px">
-                                        @forelse ($sortedUsers as $user)
-                                            <a href="{{ route('chat.room', ['room_id' => $user->chatRoom->room_id ?? mt_rand(), 'other_id' =>  $user->id] ) }}" class="text-body">
+                                        @forelse ($userRooms as $roomId  =>  $room)
+                                            <a href="{{ route('chat.room', ['room_id' => $roomId ?? mt_rand()] ) }}" class="text-body">
                                                 <div class="d-flex align-items-start p-2">
                                                     <div class="position-relative">
                                                         <span class="user-status"></span>
@@ -79,16 +79,52 @@
                                                     <div class="flex-1">
                                                         <h5 class="mt-0 mb-0 font-14">
                                                             <span class="float-end text-muted fw-normal font-12">
-                                                                {{ \Carbon\Carbon::parse($user->latestChat->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
+                                                                {{ \Carbon\Carbon::parse($room->latestChat->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
                                                             </span>
-                                                            {{ $user->name }}
+                                                       {{-- room name --}}
+                                                       @if ($room['users']->count() > 2)
+                                                       {{-- This is a group room --}}
+
+                                                       @if ($room['users'][0]->room_name ?? false )
+                                                           {{-- Group room has a custom room name --}}
+                                                           @php
+                                                               $roomName = $room['users'][0]->room_name;
+                                                           @endphp
+                                                       @else
+                                                           {{-- Room name is all users' names in this room --}}
+                                                           @php
+                                                               $roomName = $room['users']->implode('name', ', ');
+                                                           @endphp
+                                                       @endif
+                                                   @elseif ($room['users']->count() > 1)
+                                                       {{-- This is a private room --}}
+                                                       @if ($room['users']->contains('id', Auth::user()->id))
+                                                           {{-- Auth user is part of the private room --}}
+                                                           @php
+                                                               $otherUsers = $room['users']->where('id', '!=', Auth::user()->id);
+                                                               $roomName = $otherUsers->implode('name', ', ');
+                                                           @endphp
+                                                       @else
+                                                           {{-- Auth user is not part of the private room --}}
+                                                           @php
+                                                               $roomName = $room['users']->implode('id', ', ');
+                                                           @endphp
+                                                       @endif
+                                                   @else
+                                                       {{-- Default room name --}}
+                                                       @php
+                                                           $roomName = $room['latest_chat']->note;
+                                                       @endphp
+                                                   @endif
+
+                                                   {{ $roomName }}
                                                         </h5>
                                                         <p class="mt-1 mb-0 text-muted font-14">
                                                             <span class="w-25 float-end text-end"><span
                                                                     class="badge badge-soft-danger">3</span></span>
                                                             <span
 
-                                                                class="w-75">{{ $user->latestChat->note ?? 'Start new conversation' }}</span>
+                                                                class="w-75">{{ $room->latestChat->note ?? 'Start new conversation' }}</span>
                                                         </p>
                                                     </div>
                                                 </div>
