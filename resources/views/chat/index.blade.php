@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('content')
     <div class="content">
-
         <!-- Start Content-->
         <div class="container-fluid">
 
@@ -51,7 +50,8 @@
                                 <div class="position-relative" style="display: flex">
                                     <input name="search" type="text" class="form-control form-control-light"
                                         value="{{ $_GET['search'] ?? '' }}" placeholder="People, groups & messages...">
-                                    <span class="mdi mdi-magnify" style="
+                                    <span class="mdi mdi-magnify"
+                                        style="
     position: absolute;
     right: .3rem;
     top: .5rem;
@@ -68,71 +68,189 @@
 
 
                                     <div data-simplebar style="max-height: 498px">
-                                        @forelse ($userRooms as $roomId  =>  $room)
-                                            <a href="{{ route('chat.room', ['room_id' => $roomId ?? mt_rand()] ) }}" class="text-body">
+                                        @isset($userRooms)
+                                            @forelse ($userRooms as $roomId  =>  $room)
+                                                <a href="{{ route('chat.room', ['room_id' => $roomId ?? mt_rand()]) }}"
+                                                    class="text-body">
+                                                    <div class="d-flex align-items-start p-2">
+                                                        <div class="position-relative">
+                                                            <span class="user-status"></span>
+                                                            <img src="/assets/images/users/avatar-2.jpg"
+                                                                class="me-2 rounded-circle" height="42" alt="user" />
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <h5 class="mt-0 mb-0 font-14">
+                                                                <span class="float-end text-muted fw-normal font-12">
+                                                                    {{ \Carbon\Carbon::parse($room->latestChat->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
+                                                                </span>
+                                                                {{-- room name --}}
+                                                                @if ($room['users']->count() > 2)
+                                                                    {{-- This is a group room --}}
+
+                                                                    @if ($room['users'][0]->room_name ?? false)
+                                                                        {{-- Group room has a custom room name --}}
+                                                                        @php
+                                                                            $roomName = $room['users'][0]->room_name;
+                                                                        @endphp
+                                                                    @else
+                                                                        {{-- Room name is all users' names in this room --}}
+                                                                        @php
+                                                                            $roomName = $room['users']->implode('name', ', ');
+                                                                        @endphp
+                                                                    @endif
+                                                                @elseif ($room['users']->count() > 1)
+                                                                    {{-- This is a private room --}}
+                                                                    @if ($room['users']->contains('id', Auth::user()->id))
+                                                                        {{-- Auth user is part of the private room --}}
+                                                                        @php
+                                                                            $otherUsers = $room['users']->where('id', '!=', Auth::user()->id);
+                                                                            $roomName = $otherUsers->implode('name', ', ');
+                                                                        @endphp
+                                                                    @else
+                                                                        {{-- Auth user is not part of the private room --}}
+                                                                        @php
+                                                                            $roomName = $room['users']->implode('id', ', ');
+                                                                        @endphp
+                                                                    @endif
+                                                                @else
+                                                                    {{-- Default room name --}}
+                                                                    @php
+                                                                        $roomName = $room['latest_chat']->note;
+                                                                    @endphp
+                                                                @endif
+
+                                                                {{ $roomName }}
+                                                            </h5>
+                                                            <p class="mt-1 mb-0 text-muted font-14">
+                                                                <span class="w-25 float-end text-end"><span
+                                                                        class="badge badge-soft-danger">3</span></span>
+                                                                <span
+                                                                    class="w-75">{{ $room->latestChat->note ?? 'Start new conversation' }}</span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            @empty
+                                                <p>Nothing</p>
+                                            @endforelse
+                                        @endisset
+                                        @isset($sortedUsers)
+                                            @forelse ($sortedUsers as $user)
+                                                <a href="{{ route('chat.room', ['room_id' => $user ?? mt_rand()]) }}"
+                                                    class="text-body">
+                                                    <div class="d-flex align-items-start p-2">
+                                                        <div class="position-relative">
+                                                            <span class="user-status"></span>
+                                                            <img src="/assets/images/users/avatar-2.jpg"
+                                                                class="me-2 rounded-circle" height="42" alt="user" />
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <h5 class="mt-0 mb-0 font-14">
+                                                                <span class="float-end text-muted fw-normal font-12">
+                                                                    {{ \Carbon\Carbon::parse($room->latestChat->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
+                                                                </span>
+                                                                {{-- room name --}}
+                                                                @php
+                                                                    $roomName = '';
+                                                                    if ($user->chatRoom && $user->chatRoom->room_name) {
+                                                                        // Group room has a custom room name
+                                                                        $roomName = $user->chatRoom->room_name;
+                                                                    } elseif ($user->chatRoom && $user->chatRoom->users->count() > 1) {
+                                                                        // This is a private room
+                                                                        if ($user->chatRoom->users->contains('id', Auth::user()->id)) {
+                                                                            // Auth user is part of the private room
+                                                                            $otherUsers = $user->chatRoom->users->where('id', '!=', Auth::user()->id);
+                                                                            $roomName = $otherUsers->implode('name', ', ');
+                                                                        } else {
+                                                                            // Auth user is not part of the private room
+                                                                            $roomName = $user->chatRoom->users->implode('name', ', ');
+                                                                        }
+                                                                    } else {
+                                                                        // Default room name
+                                                                        $roomName = $user->latestChat->note ?? '';
+                                                                    }
+                                                                @endphp
+
+                                                                {{ $roomName }}
+                                                            </h5>
+                                                            <p class="mt-1 mb-0 text-muted font-14">
+                                                                <span class="w-25 float-end text-end"><span
+                                                                        class="badge badge-soft-danger">3</span></span>
+                                                                <span
+                                                                    class="w-75">{{ $room->latestChat->note ?? 'Start new conversation' }}</span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                </a>
+                                            @empty
+                                                <p>Nothing</p>
+                                            @endforelse
+                                        @endisset
+                                        @isset($searchUsers)
+                                            @forelse ($searchUsers as $user)
+                                                <?php
+
+                                                if (isset($user->chatRoom[0])) {
+                                                    $roomId = $user->chatRoom[0]->room_id;
+                                                } else {
+                                                    $roomId = mt_rand();
+                                                }
+                                                ?>
+                                                @if (!isset($user->id))
+                                                    @continue
+                                                @endif
+                                                @if (isset($user->chatRoom[0]) && !isset($user['room_type']))
+                                                    <a href="{{ route('chat.room', ['room_id' => $roomId]) }}"
+                                                        class="text-body">
+                                                    @elseif(!isset($user['room_type']))
+                                                        {{-- <a href="{{ route('chat.room', ['room_id' => $roomId, 'otherId' =>  $user->id] ) }}" class="text-body"> --}}
+                                                @endif
                                                 <div class="d-flex align-items-start p-2">
                                                     <div class="position-relative">
                                                         <span class="user-status"></span>
-                                                        <img src="/assets/images/users/avatar-2.jpg"
-                                                            class="me-2 rounded-circle" height="42" alt="user" />
+                                                        <img src="/assets/images/users/avatar-2.jpg" class="me-2 rounded-circle"
+                                                            height="42" alt="user" />
                                                     </div>
                                                     <div class="flex-1">
                                                         <h5 class="mt-0 mb-0 font-14">
                                                             <span class="float-end text-muted fw-normal font-12">
                                                                 {{ \Carbon\Carbon::parse($room->latestChat->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
                                                             </span>
-                                                       {{-- room name --}}
-                                                       @if ($room['users']->count() > 2)
-                                                       {{-- This is a group room --}}
+                                                            {{-- room name --}}
+                                                            @php
+                                                                $roomName = '';
+                                                                if (isset($user->chatRoom[0]) && $user->chatRoom[0]->room_name) {
+                                                                    // Group room has a custom room name
+                                                                    $roomName = $user->chatRoom[0]->room_name ?? '';
+                                                                } elseif (isset($user->chatRoom[0])) {
+                                                                    // This is a private room
 
-                                                       @if ($room['users'][0]->room_name ?? false )
-                                                           {{-- Group room has a custom room name --}}
-                                                           @php
-                                                               $roomName = $room['users'][0]->room_name;
-                                                           @endphp
-                                                       @else
-                                                           {{-- Room name is all users' names in this room --}}
-                                                           @php
-                                                               $roomName = $room['users']->implode('name', ', ');
-                                                           @endphp
-                                                       @endif
-                                                   @elseif ($room['users']->count() > 1)
-                                                       {{-- This is a private room --}}
-                                                       @if ($room['users']->contains('id', Auth::user()->id))
-                                                           {{-- Auth user is part of the private room --}}
-                                                           @php
-                                                               $otherUsers = $room['users']->where('id', '!=', Auth::user()->id);
-                                                               $roomName = $otherUsers->implode('name', ', ');
-                                                           @endphp
-                                                       @else
-                                                           {{-- Auth user is not part of the private room --}}
-                                                           @php
-                                                               $roomName = $room['users']->implode('id', ', ');
-                                                           @endphp
-                                                       @endif
-                                                   @else
-                                                       {{-- Default room name --}}
-                                                       @php
-                                                           $roomName = $room['latest_chat']->note;
-                                                       @endphp
-                                                   @endif
+                                                                    // Auth user is part of the private room
+                                                                    $otherUsers = $user->name;
+                                                                    $roomName = $otherUsers;
+                                                                } else {
+                                                                    // Default room name
+                                                                    $roomName = $user->name ?? '';
+                                                                }
+                                                            @endphp
 
-                                                   {{ $roomName }}
+                                                            {{ $roomName }}
                                                         </h5>
                                                         <p class="mt-1 mb-0 text-muted font-14">
                                                             <span class="w-25 float-end text-end"><span
                                                                     class="badge badge-soft-danger">3</span></span>
                                                             <span
-
                                                                 class="w-75">{{ $room->latestChat->note ?? 'Start new conversation' }}</span>
                                                         </p>
                                                     </div>
                                                 </div>
-                                            </a>
-                                        @empty
-                                            <!-- Empty case content -->
-                                        @endforelse
 
+                                                </a>
+                                            @empty
+                                                <p>Nothing</p>
+                                            @endforelse
+                                        @endisset
 
 
                                     </div> <!-- end slimscroll-->
@@ -146,7 +264,7 @@
 
                 <!-- chat area -->
                 <div class="col-xl-9 col-lg-8">
-                    @isset( $otherUser)
+                    {{-- @isset($otherUser) --}}
                     <div class="card">
                         <div class="card-body py-2 px-3 border-bottom border-light">
                             <div class="d-flex py-1">
@@ -154,7 +272,8 @@
                                     alt="Brandon Smith">
                                 <div class="flex-1">
                                     <h5 class="mt-0 mb-0 font-15">
-                                        <a href="contacts-profile.html" class="text-reset">{{ $otherUser->name }}</a>
+                                        <a href="contacts-profile.html"
+                                            class="text-reset">{{ $roomNameByRoomId ?? null }}</a>
                                     </h5>
                                     <p class="mt-1 mb-0 text-muted font-12">
                                         <small class="mdi mdi-circle text-success"></small> Online
@@ -166,8 +285,8 @@
                                             data-bs-toggle="tooltip" data-bs-placement="top" title="Voice Call"></i>
                                     </a>
                                     <a href="javascript: void(0);" class="text-reset font-19 py-1 px-2 d-inline-block">
-                                        <i class="fe-video" data-bs-container="#tooltip-container" data-bs-toggle="tooltip"
-                                            data-bs-placement="top" title="Video Call"></i>
+                                        <i class="fe-video" data-bs-container="#tooltip-container"
+                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Video Call"></i>
                                     </a>
                                     <a href="javascript: void(0);" class="text-reset font-19 py-1 px-2 d-inline-block">
                                         <i class="fe-user-plus" data-bs-container="#tooltip-container"
@@ -181,75 +300,77 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <ul class="conversation-list chat-app-conversation" id="chat-container" data-simplebar style="max-height: 460px">
+                            <ul class="conversation-list chat-app-conversation" id="chat-container" data-simplebar
+                                style="max-height: 460px">
 
+                                @isset($chats)
+                                    @forelse ($chats as $chat)
+                                        @if ($chat->sender_id != Auth::user()->id)
+                                            <li class="clearfix">
+                                                <div class="chat-avatar">
+                                                    <img src="/assets/images/users/avatar-5.jpg" class="rounded"
+                                                        alt="James Z" />
+                                                    <i>{{ \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->hour . ':' . \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->minute ?? '00:00 ' }}</i>
+                                                </div>
+                                                <div class="conversation-text">
+                                                    <div class="ctext-wrap">
+                                                        <i>{{ $chat->name }}</i>
+                                                        <p>
+                                                            {{ $chat->note }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="conversation-actions dropdown">
+                                                    <button class="btn btn-sm btn-link text-reset" data-bs-toggle="dropdown"
+                                                        aria-expanded="false"><i
+                                                            class='mdi mdi-dots-vertical font-18'></i></button>
 
-                                @forelse ($chats as $chat)
-                                    @if ($chat->sender_id == $otherUser->id)
-                                        <li class="clearfix">
-                                            <div class="chat-avatar">
-                                                <img src="/assets/images/users/avatar-5.jpg" class="rounded"
-                                                    alt="James Z" />
-                                                <i>{{ \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->hour . ':' . \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->minute ?? '00:00 ' }}</i>
-                                            </div>
-                                            <div class="conversation-text">
-                                                <div class="ctext-wrap">
-                                                    <i>{{ $otherUser->name }}</i>
-                                                    <p>
-                                                        {{ $chat->note }}
-                                                    </p>
+                                                    <div class="dropdown-menu dropdown-menu-end">
+                                                        <a class="dropdown-item" href="#">Copy Message</a>
+                                                        <a class="dropdown-item" href="#">Edit</a>
+                                                        <a class="dropdown-item" href="#">Delete</a>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="conversation-actions dropdown">
-                                                <button class="btn btn-sm btn-link text-reset" data-bs-toggle="dropdown"
-                                                    aria-expanded="false"><i
-                                                        class='mdi mdi-dots-vertical font-18'></i></button>
+                                            </li>
+                                        @else
+                                            <li class="clearfix odd">
+                                                <div class="chat-avatar">
+                                                    <img src="/assets/images/users/avatar-1.jpg" class="rounded"
+                                                        alt="Nik Patel" />
+                                                    <i>{{ \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->hour . ':' . \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->minute ?? '00:00 ' }}</i>
+                                                </div>
+                                                <div class="conversation-text">
+                                                    <div class="ctext-wrap">
+                                                        <i>{{ Auth::user()->name }}</i>
+                                                        <p>
+                                                            {{ $chat->note }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="conversation-actions dropdown">
+                                                    <button class="btn btn-sm btn-link text-reset" data-bs-toggle="dropdown"
+                                                        aria-expanded="false"><i
+                                                            class='mdi mdi-dots-vertical font-18'></i></button>
 
-                                                <div class="dropdown-menu dropdown-menu-end">
-                                                    <a class="dropdown-item" href="#">Copy Message</a>
-                                                    <a class="dropdown-item" href="#">Edit</a>
-                                                    <a class="dropdown-item" href="#">Delete</a>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="#">Copy Message</a>
+                                                        <a class="dropdown-item" href="#">Edit</a>
+                                                        <a class="dropdown-item" href="#">Delete</a>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </li>
-                                    @else
-                                        <li class="clearfix odd">
-                                            <div class="chat-avatar">
-                                                <img src="/assets/images/users/avatar-1.jpg" class="rounded"
-                                                    alt="Nik Patel" />
-                                                <i>{{ \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->hour . ':' . \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->minute ?? '00:00 ' }}</i>
-                                            </div>
-                                            <div class="conversation-text">
-                                                <div class="ctext-wrap">
-                                                    <i>{{ Auth::user()->name }}</i>
-                                                    <p>
-                                                        {{ $chat->note }}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div class="conversation-actions dropdown">
-                                                <button class="btn btn-sm btn-link text-reset" data-bs-toggle="dropdown"
-                                                    aria-expanded="false"><i
-                                                        class='mdi mdi-dots-vertical font-18'></i></button>
-
-                                                <div class="dropdown-menu">
-                                                    <a class="dropdown-item" href="#">Copy Message</a>
-                                                    <a class="dropdown-item" href="#">Edit</a>
-                                                    <a class="dropdown-item" href="#">Delete</a>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    @endif
-                                @empty
-                                    <!-- Empty case content -->
-                                @endforelse
+                                            </li>
+                                        @endif
+                                    @empty
+                                        <p>Bắt đầu cuộc trò chuyện</p>
+                                    @endforelse
+                                @endisset
                             </ul>
                             <script>
                                 $(document).ready(function() {
                                     $(window).on('load', function() {
-                                    // Tự động kéo xuống chat cuối cùng
-                                    let test=  document.getElementsByClassName('simplebar-content-wrapper')[2]
-                                  test.scrollTop = test.scrollHeight;
+                                        // Tự động kéo xuống chat cuối cùng
+                                        let test = document.getElementsByClassName('simplebar-content-wrapper')[2]
+                                        test.scrollTop = test.scrollHeight;
                                     })
                                 });
                             </script>
@@ -262,7 +383,7 @@
                                             <div class="row">
 
                                                 <div class="col mb-2 mb-sm-0">
-                                                    <input type="hidden" name="room_id" value="{{$room_id}}">
+                                                    <input type="hidden" name="room_id" value="{{ $room_id ?? null }}">
 
                                                     <input type="text" name="note" class="form-control border-0"
                                                         placeholder="Enter your text" required="">
@@ -288,7 +409,7 @@
                             <!-- end row -->
                         </div> <!-- end card-body -->
                     </div> <!-- end card -->
-                    @endisset
+                    {{-- @endisset --}}
 
                 </div>
                 <!-- end chat area-->
