@@ -112,6 +112,7 @@ public function getRoomsByParticipants($authId)
 }
 public function getRoomsBySearchParams($authId, $searchTerm)
 {
+ 
     // lấy tất cả các row user join chat room group by room id và điều kiện là room id đó phải có 2 row chứa cả 2 user id: auth user id và user id
     // - lấy phòng có 2 người
     $users = User::where('name', 'like', '%' . $searchTerm . '%')
@@ -128,9 +129,10 @@ public function getRoomsBySearchParams($authId, $searchTerm)
             ->whereNull('cr2.room_id');
     })
     ->select('users.*')
-    ->where(function ($query) {
+    ->where(function ($query) use ($authId) {
         $query->whereNotNull('cr1.user_id')
-            ->orWhereNull('cr2.user_id');
+            ->orWhereNull('cr2.user_id')
+            ->orWhereNotIn('users.id', [$authId]);
     })
     ->get();
     if ($users->isEmpty()) {

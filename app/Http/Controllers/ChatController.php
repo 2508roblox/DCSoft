@@ -23,12 +23,11 @@ class ChatController extends BaseController
         // get all room id of this user
         $authUserId = Auth::user()->id;
 
-        if (empty($_GET['search']) || !isset($_GET['search'])) {
+        if (!isset($_GET['search'])  ) {
             $authUser = User::find($authUserId);
             $user_rooms_id = $authUser->getRoomsByParticipants($authUserId);
             // join all user id and room_name of each room
             $userRooms = [];
-
 
             foreach ($user_rooms_id as $roomId) {
                 $latestChat = DB::table('chat')
@@ -47,15 +46,18 @@ class ChatController extends BaseController
                     'users' => $userRoom
                 ];
             }
-            // get Chats in first room
-            $userRoomValues = array_values($userRooms); // Get the array values
 
-            $firstUserRoom = reset($userRoomValues); // Get the first element
+            // get Chats in first room
+
+
             if ($room_id_param) {
                 # code...
                 $first_room_id =  $room_id_param;
             } else {
-                $first_room_id =    $firstUserRoom['latest_chat']->room_id;
+                $keys = array_keys($userRooms);
+                $first_key = reset($keys);
+                $first_room_id =  $first_key;
+
             }
 
             // chats
@@ -78,7 +80,7 @@ class ChatController extends BaseController
             return view('chat.index', compact('chats', 'usersInRoom', 'room_id', 'userRooms', 'roomNameByRoomId'));
         } else {
 
-            $room_id =intval($room_id_param);
+            $room_id = intval($room_id_param);
 
             //search logic
             $authUser = User::find($authUserId);
@@ -87,11 +89,11 @@ class ChatController extends BaseController
             $users = $authUser->getRoomsBySearchParams($authUserId, $searchTerm);
             // trường hợp group chat
 
-            if ( isset($users['room_type'] ) && $users['room_type'] == 'group') {
+            if (isset($users['room_type']) && $users['room_type'] == 'group') {
                 //get latest chat
 
                 foreach ($users as $key => $user) {
-                    if ($key === 'room_type') {
+                    if ($key == 'room_type') {
                         continue; // Skip the room_type element
                     }
 
@@ -99,39 +101,53 @@ class ChatController extends BaseController
 
                     $latestChat = $this->getLatestChat($user->room_id ?? null);
                     $user->latestChat = $latestChat->note ?? null;
-
                 }
-                $searchUsers =$users->sortByDesc(function ($user) {
+                $searchUsers = $users->sortByDesc(function ($user) {
                     return optional($user->latestChat->id ?? null);
                 });
                 $first_room_id = $users[0]->room_id ?? null;
 
                 $spec_room = ChatRoom::where('room_id', $first_room_id)->first();
-                $chatsInRoom = $spec_room->getChatsInRoomModel(intval($first_room_id)) ?? null;
-                $chats = $chatsInRoom['chats'] ?? [];
-                return view('chat.index', compact('searchUsers', 'room_id','chats'));
+                if($spec_room != null) {
+                    $chatsInRoom = $spec_room->getChatsInRoomModel(intval($first_room_id)) ?? null;
+                    $chats = $chatsInRoom['chats'] ?? [];
+                }else {
+                    $chats =  [];
+                }
+
+                return view('chat.index', compact('searchUsers', 'room_id', 'chats'));
+            } else {
+              // trường hợp private room
+foreach ($users as $user) {
+    // get only 2 members room
+    $chatRoom = $user->getChatRoom($user->id, $authUserId);
+    $user->chatRoom = $chatRoom;
+    $latestChat = $user->getLatestChat(isset($user->chatRoom[0]->room_id) ? $user->chatRoom[0]->room_id  : null);
+    $user->latestChat = $latestChat;
+
+    if ($user->chatRoom == null) {
+        $spec_room = $this->createRoomBy2UserId($user->id, $authUserId, intval(mt_rand()));
+        $user->chatRoom = $spec_room;
+    }
+}
+// get first room
+$first_room_id = null;
+foreach ($users as $user) {
+    if (!empty($user->chatRoom)) {
+        $first_room_id = $user->chatRoom->room_id;
+        break;
+    }
+}
+$spec_room = ChatRoom::where('room_id', $first_room_id)->first();
 
 
-            }else {
-                  // trường hợp private room
-            foreach ($users as $user) {
-                // get only 2 members room
-                $chatRoom = $user->getChatRoom($user->id, $authUserId);
-                $user->chatRoom = $chatRoom;
-                $latestChat = $user->getLatestChat(isset($user->chatRoom[0]->room_id) ?$user->chatRoom[0]->room_id  : null);
-                $user->latestChat = $latestChat;
+$chatsInRoom = $spec_room->getChatsInRoomModel(intval($first_room_id)) ?? null;
+$chats = $chatsInRoom['chats'] ?? [];
+$searchUsers = $users->sortByDesc(function ($user) {
+    return optional($user->latestChat->id ?? null);
+});
+                return view('chat.index', compact('searchUsers', 'room_id', 'chats'));
             }
-            $first_room_id = $users[0]->chatRoom[0]->room_id ?? null;
-
-            $spec_room = ChatRoom::where('room_id', $first_room_id)->first();
-            $chatsInRoom = $spec_room->getChatsInRoomModel(intval($first_room_id)) ?? null;
-            $chats = $chatsInRoom['chats'] ?? [];
-            $searchUsers = $users->sortByDesc(function ($user) {
-                return optional($user->latestChat->id ?? null);
-            });
-            return view('chat.index', compact('searchUsers', 'room_id', 'chats'));
-            }
-
         }
     }
     public function getChatsInRoom($room_id)
@@ -173,7 +189,7 @@ class ChatController extends BaseController
 
         DB::table('chat_room')->insert($data);
 
-       $new_room = ChatRoom::where('room_id', $room_id)->first();
+        $new_room = ChatRoom::where('room_id', $room_id)->first();
 
         return $new_room;
     }
@@ -181,9 +197,49 @@ class ChatController extends BaseController
     {
         if ($roomId != null) {
             return ChatMission::where('room_id', $roomId)
-            ->orderBy('id', 'desc')
-            ->first();
+                ->orderBy('id', 'desc')
+                ->first();
         }
         return null;
+    }
+    public function getUsersNotInRoom($roomId)
+    {
+        if ($roomId != null) {
+            return User::whereNotIn('id', function ($query) use ($roomId) {
+                $query->select('user_id')
+                    ->from('chat_room')
+                    ->where('room_id', $roomId);
+            })->get();
+        }
+        return null;
+    }
+    public function addMembersToChatRoom($roomId)
+    {
+        $users = request()->input('users');
+
+        foreach ($users as $userId) {
+            $roomName = null;
+
+            // Kiểm tra nếu tồn tại room_name trong room_id cũ
+            $existingChatRoom = ChatRoom::where('room_id', $roomId)
+                ->whereNotNull('room_name')
+                ->first();
+
+            if ($existingChatRoom) {
+                $roomName = $existingChatRoom->room_name;
+            } else {
+                $roomName = 'Chat Room'; // Đặt tên phòng chat ở đây
+            }
+
+            $chatRoom = new ChatRoom();
+            $chatRoom->user_id = $userId;
+            $chatRoom->room_id = $roomId;
+            $chatRoom->room_name = $roomName;
+            $chatRoom->save();
+        }
+
+        // Thực hiện các xử lý khác sau khi thêm thành viên vào phòng chat
+
+        // Redirect hoặc trả về response tùy thuộc vào logic của bạn
     }
 }

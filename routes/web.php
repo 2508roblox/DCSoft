@@ -79,6 +79,8 @@ Route::middleware(['auth'])->group(function () {
 	Route::get('chat', [ChatController::class, 'index'])->name('chat.index');
 	Route::post('chat/create', [ChatController::class, 'store'])->name('chat.add');
 	Route::get('chat/room/{room_id}', [ChatController::class, 'getChatsInRoom'])->name('chat.room');
+	Route::get('chat/room/{room_id}/members', [ChatController::class, 'getUsersNotInRoom'])->name('chat.newmembers');
+	Route::post('chat/room/{room_id}/members/add', [ChatController::class, 'addMembersToChatRoom'])->name('chat.addmembers');
 
 	//Notification
 	Route::get('notification/new', [NotificationController::class, 'getNewNotification'])->name('notification.new');
