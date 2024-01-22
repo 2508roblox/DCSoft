@@ -78,20 +78,17 @@ class User extends Authenticatable implements HasMedia
     public function getChatRoom($userId, $authUserId)
     {
         $chatRooms = DB::table('chat_room')
-            ->join('users', 'chat_room.user_id', '=', 'users.id')
-            ->select('chat_room.room_id', 'chat_room.room_name') // Lấy trường room_name
-            ->whereIn('chat_room.room_id', function ($query) use ($userId, $authUserId) {
+            ->select('room_id', DB::raw('COUNT(DISTINCT user_id) AS user_count'))
+            ->whereIn('room_id', function ($query) use ($userId, $authUserId) {
                 $query->select('room_id')
                     ->from('chat_room')
                     ->whereIn('user_id', [$userId, $authUserId])
                     ->groupBy('room_id')
                     ->havingRaw('COUNT(DISTINCT user_id) = 2');
             })
-            ->groupBy('chat_room.room_id', 'chat_room.room_name') // Thêm room_name vào mệnh đề groupBy
-            ->havingRaw('COUNT(DISTINCT chat_room.user_id) = 2')
-            ->get()
-            ->toArray();
-
+            ->groupBy('room_id')
+            ->havingRaw('COUNT(DISTINCT user_id) = 2')
+            ->get();
         return $chatRooms;
     }
     public function getRoomsByParticipants($authId)
@@ -116,7 +113,7 @@ class User extends Authenticatable implements HasMedia
     {
 
         // lấy tất cả các row user join chat room group by room id và điều kiện là room id đó phải có 2 row chứa cả 2 user id: auth user id và user id
-        // - lấy phòng có 2 người
+        // - lấy những user phòng có 2 người hoặc chưa có phòng chung với auth id
         $users = User::where('name', 'like', '%' . $searchTerm . '%')
             ->leftJoin('chat_room AS cr1', function ($join) use ($authId) {
                 $join->on('users.id', '=', 'cr1.user_id')
@@ -137,6 +134,7 @@ class User extends Authenticatable implements HasMedia
                     ->orWhereNotIn('users.id', [$authId]);
             })
             ->get();
+
         if ($users->isEmpty()) {
             $chatRooms = ChatRoom::where('room_name', 'like', '%' . $searchTerm . '%')
                 ->leftJoin('users', 'chat_room.user_id', '=', 'users.id')
@@ -152,7 +150,7 @@ class User extends Authenticatable implements HasMedia
             $chatRooms['room_type'] = 'group';
             return $chatRooms;
 
-    
+
         }
         return $users;
     }

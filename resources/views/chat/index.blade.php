@@ -151,6 +151,7 @@
                                             @continue
                                            @endif
                                                 <a href="{{ route('chat.room', ['room_id' => $user ?? mt_rand()]) }}"
+
                                                     class="text-body">
                                                     <div class="d-flex align-items-start p-2">
                                                         <div class="position-relative">
@@ -205,12 +206,15 @@
 
                                         @isset($searchUsers)
 
+
                                         @if (!isset($searchUsers[0]))
                                         <p>User Not Found</p>
 
                                         @endif
                                             @forelse ($searchUsers as $user)
-                                          @if ($user['id'] == Auth::user()->id)
+                                            {{-- search user list --}}
+
+                                          @if( isset($user['id']) && $user['id'] == Auth::user()->id)
                                              @continue
                                           @else
 
@@ -219,20 +223,25 @@
                                             @continue
                                            @endif
                                                 <?php
-
-                                                if (isset($user->chatRoom[0])) {
-                                                    $roomId = $user->chatRoom[0]->room_id;
-                                                } else {
-                                                    $roomId = mt_rand();
-                                                }
+                                                 $roomId = $user->chatRoom[0]->room_id ??$user->chatRoom->room_id ?? null;
                                                 ?>
+
+
+
+
+
+
+
                                                 @if (!isset($user->id))
                                                     @continue
                                                 @endif
                                                 @if (isset($user->chatRoom[0]) && !isset($user['room_type']))
+
                                                     <a href="{{ route('chat.room', ['room_id' => $roomId]) }}"
                                                         class="text-body">
                                                     @elseif(!isset($user['room_type']))
+                                                    {{-- search new user => create new room --}}
+
                                                         <a href="{{ route('chat.room', ['room_id' => $roomId, 'otherId' => $user->id]) }}"
                                                             class="text-body">
                                                 @endif
@@ -250,7 +259,7 @@
                                                             {{-- room name --}}
                                                             @php
                                                                 $roomName = '';
-                                                                if (isset($user->chatRoom[0]) && $user->chatRoom[0]->room_name) {
+                                                                if (isset($user->chatRoom[0]) && isset($user->chatRoom[0]->room_name) && $user->chatRoom[0]->room_name) {
                                                                     // Group room has a custom room name
                                                                     $roomName = $user->chatRoom[0]->room_name ?? '';
                                                                 } elseif (isset($user->chatRoom[0])) {
@@ -310,31 +319,49 @@
                                     alt="Brandon Smith">
                                 <div class="flex-1">
                                     <h5 class="mt-0 mb-0 font-15">
-                                        @if ( isset($userRooms[$room_id]) && $userRooms[$room_id]['users'] && count($userRooms[$room_id]['users']) > 2)
+                                        @if (isset($userRooms[$room_id]) && $userRooms[$room_id]['users'] && count($userRooms[$room_id]['users']) > 2)
+                                        <?php
+                                        $userNames = '';
+
+                                        foreach ($userRooms[$room_id]['users'] as $index => $user) {
+                                            $userName = $user->name;
+                                            $userNames .= $userName . ', ';
+                                        }
+
+                                        $userNames = rtrim($userNames, ', ');
+
+                                        $roomNameByRoomId = $userNames;
+                                        ?>
+                                        <a href="contacts-profile.html" class="text-reset">{{ $roomNameByRoomId ?? $searchUsers[0]->name }}</a>
+                                    @else
+                                        @if (isset($usersInRoom) && $usersInRoom )
+
                                             <?php
                                             $userNames = '';
+                                            foreach ($usersInRoom[$room_id]['users']  as $user) {
+                                                if (isset($user->id)) {
+                                                    # code...
+                                                  $other_id =  $user->id;
+                                                }else {
+                                                    $other_id = $_GET['otherId']  ?? $roomName ;
+                                                }
 
-                                            foreach ($userRooms[$room_id]['users'] as $index => $user) {
-                                                $userName = $user->name;
-                                                $userNames .= $userName . ', ';
+                                                if ($other_id != Auth::user()->id && isset( $user->name )) {
+                                                    $userNames .= $user->name . ', ';
+                                                }else {
+
+                                                    $userNames =   $roomNameByRoomId;
+                                                }
+                                                $userNames = rtrim($userNames, ', ');
                                             }
-
-                                            $userNames = rtrim($userNames, ', ');
-
-                                            $roomNameByRoomId = $userNames;
                                             ?>
-                                            <a href="contacts-profile.html"
-                                                class="text-reset">{{ $roomNameByRoomId ?? $searchUsers[0]->name }}</a>
+                                            <a href="contacts-profile.html" class="text-reset">{{ $userNames }}</a>
+                                        @elseif (isset($roomNameByRoomId) && $roomNameByRoomId != '' && !$usersInRoom[0]->name)
+                                            <a href="contacts-profile.html" class="text-reset">{{ $roomNameByRoomId }}</a>
                                         @else
-                                        @if (isset($roomNameByRoomId) && $roomNameByRoomId != '')
-                                        <a href="contacts-profile.html"
-                                        class="text-reset">{{  $roomNameByRoomId  }}</a>
-                                        @else
-                                        <a href="contacts-profile.html"
-                                        class="text-reset">{{ isset($searchUsers[0]) ? ($roomNameByRoomId ?? $searchUsers[0]->name) : 'Not Found' }}</a>
+                                            <a href="contacts-profile.html" class="text-reset">{{ isset($searchUsers[0]) ? $roomNameByRoomId ?? $searchUsers[0]->name : 'Not Found' }}</a>
                                         @endif
-
-                                        @endif
+                                    @endif
                                     </h5>
                                     <p class="mt-1 mb-0 text-muted font-12">
                                         <small class="mdi mdi-circle text-success"></small> Online
@@ -454,9 +481,9 @@
                                             accept-charset="UTF-8" enctype="multipart/form-data" id="chat-form">
                                             @csrf
                                             <div class="row">
-
                                                 <div class="col mb-2 mb-sm-0">
-                                                    <input type="hidden" name="room_id" value="{{ $room_id ?? null }}">
+
+                                                    <input type="hidden" name="room_id" value="{{ $room_id != 0 ?  $room_id  :  $roomId ?? null }}">
 
                                                     <input type="file" name="file_chat" id="file_chat" hidden>
                                                     <input type="text" name="note" id="note" class="form-control border-0" placeholder="Enter your text" required="">

@@ -30,7 +30,7 @@ class ChatRoom extends Model
         ->join('users', 'chat.sender_id', '=', 'users.id')
         ->select('chat.*', 'users.name')
         ->get();
-
+        
 
         foreach ($chats as $chat) {
             if ($chat->getFirstMedia('chat_files' ) != null) {
