@@ -72,6 +72,7 @@
                                     <div data-simplebar style="max-height: 498px">
                                         {{-- own chat room --}}
                                         @isset($userRooms)
+
                                             @forelse ($userRooms as $roomId  =>  $room)
                                                 <a href="{{ route('chat.room', ['room_id' => $roomId ?? mt_rand()]) }}"
                                                     class="text-body">
@@ -84,7 +85,11 @@
                                                         <div class="flex-1">
                                                             <h5 class="mt-0 mb-0 font-14">
                                                                 <span class="float-end text-muted fw-normal font-12">
+                                                                    @if (isset($room['latest_chat']->created_at))
+                                                                    {{ \Carbon\Carbon::parse($room['latest_chat']->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
+                                                                    @else
                                                                     {{ \Carbon\Carbon::parse($room->latestChat->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
+                                                                    @endif
                                                                 </span>
                                                                 {{-- room name --}}
                                                                 @if ($room['users']->count() > 2)
@@ -141,9 +146,10 @@
 
 
                                         @isset($sortedUsers)
-
                                             @forelse ($sortedUsers as $user)
-                                                @dd($user)
+                                            @if (  $user->id == Auth::user()->id)
+                                            @continue
+                                           @endif
                                                 <a href="{{ route('chat.room', ['room_id' => $user ?? mt_rand()]) }}"
                                                     class="text-body">
                                                     <div class="d-flex align-items-start p-2">
@@ -198,11 +204,17 @@
                                         {{-- search public room --}} {{-- search private chat room --}}
 
                                         @isset($searchUsers)
+
                                         @if (!isset($searchUsers[0]))
                                         <p>User Not Found</p>
 
                                         @endif
                                             @forelse ($searchUsers as $user)
+                                          @if ($user['id'] == Auth::user()->id)
+                                             @continue
+                                          @else
+
+                                          @endif
                                            @if (!isset($user->id) ?? $user->id == Auth::user()->id)
                                             @continue
                                            @endif
