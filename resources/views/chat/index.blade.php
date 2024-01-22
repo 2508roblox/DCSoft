@@ -314,12 +314,12 @@
                                             <a href="contacts-profile.html"
                                                 class="text-reset">{{ $roomNameByRoomId ?? $searchUsers[0]->name }}</a>
                                         @else
-                                        @if ($roomNameByRoomId != '')
+                                        @if (isset($roomNameByRoomId) && $roomNameByRoomId != '')
                                         <a href="contacts-profile.html"
                                         class="text-reset">{{  $roomNameByRoomId  }}</a>
                                         @else
                                         <a href="contacts-profile.html"
-                                        class="text-reset">{{ isset($searchUsers[0]) ? ($roomNameByRoomId ?? $searchUsers[0]->name) : '' }}</a>
+                                        class="text-reset">{{ isset($searchUsers[0]) ? ($roomNameByRoomId ?? $searchUsers[0]->name) : 'Not Found' }}</a>
                                         @endif
 
                                         @endif

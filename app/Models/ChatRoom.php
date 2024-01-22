@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
 
 
-class ChatRoom extends Model {
-    public static $rules = [
-    ];
+class ChatRoom extends Model
+{
+    public static $rules = [];
 
     public $table = 'chat_room';
 
@@ -23,7 +23,8 @@ class ChatRoom extends Model {
         'room_id',
         'room_name',
     ];
-    public function getChatsInRoomModel  ($room_id) {
+    public function getChatsInRoomModel($room_id)
+    {
 
         $chats = ChatMission::where('room_id', $room_id)
             ->join('users', 'chat.sender_id', '=', 'users.id')
@@ -54,56 +55,53 @@ class ChatRoom extends Model {
         $authUserId = Auth::user()->id;
 
 
-            $authUser = User::find($authUserId);
-            $user_rooms_id = $authUser->getRoomsByParticipants($authUserId);
-            // join all user id and room_name of each room
+        $authUser = User::find($authUserId);
+        $user_rooms_id = $authUser->getRoomsByParticipants($authUserId);
+        // join all user id and room_name of each room
 
-            $userRooms = [];
-
-
-            foreach ($user_rooms_id as $roomId) {
-                $latestChat = DB::table('chat')
-                    ->where('room_id', $roomId)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-
-                $userRoom = DB::table('users')
-                    ->join('chat_room', 'users.id', '=', 'chat_room.user_id')
-                    ->where('chat_room.room_id', $roomId)
-                    ->select('users.*', 'chat_room.room_name as room_name')
-                    ->get();
-
-                $userRooms[$roomId] = [
-                    'latest_chat' => $latestChat,
-                    'users' => $userRoom
-                ];
-            }
-            //room name of room_id
-            $roomNameByRoomId = null;
+        $userRooms = [];
 
 
-            if (count($usersInRoom[$room_id]['users']) >= 3) {
-                $roomNameByRoomId = $usersInRoom[$room_id]['users'][0]->room_name ?? null;
-            } elseif (count($usersInRoom[$room_id]['users']) == 2) {
-                foreach ($usersInRoom[$room_id]['users'] as $user) {
-                    if ($user->id != Auth::user()->id) {
-                        $roomNameByRoomId = $user->name;
-                        break;
-                    }
+        foreach ($user_rooms_id as $roomId) {
+            $latestChat = DB::table('chat')
+                ->where('room_id', $roomId)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $userRoom = DB::table('users')
+                ->join('chat_room', 'users.id', '=', 'chat_room.user_id')
+                ->where('chat_room.room_id', $roomId)
+                ->select('users.*', 'chat_room.room_name as room_name')
+                ->get();
+
+            $userRooms[$roomId] = [
+                'latest_chat' => $latestChat,
+                'users' => $userRoom
+            ];
+        }
+        //room name of room_id
+        $roomNameByRoomId = null;
+
+
+        if (count($usersInRoom[$room_id]['users']) >= 3) {
+            $roomNameByRoomId = $usersInRoom[$room_id]['users'][0]->room_name ?? null;
+        } elseif (count($usersInRoom[$room_id]['users']) == 2) {
+            foreach ($usersInRoom[$room_id]['users'] as $user) {
+                if ($user->id != Auth::user()->id) {
+                    $roomNameByRoomId = $user->name;
+                    break;
                 }
             }
+        }
 
 
-            // userRooms is list of rooms and members
-            return [
-                'chats' => $chats,
-                'usersInRoom' => $usersInRoom,
-                'room_id' => $room_id,
-                'userRooms' => $userRooms,
-                'roomNameByRoomId' => $roomNameByRoomId
-            ];
- 
+        // userRooms is list of rooms and members
+        return [
+            'chats' => $chats,
+            'usersInRoom' => $usersInRoom,
+            'room_id' => $room_id,
+            'userRooms' => $userRooms,
+            'roomNameByRoomId' => $roomNameByRoomId
+        ];
     }
-
-
 }

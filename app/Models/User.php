@@ -15,7 +15,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class User extends Authenticatable implements HasMedia {
+class User extends Authenticatable implements HasMedia
+{
     use HasApiTokens, HasFactory, Notifiable;
     use InteractsWithMedia;
 
@@ -60,7 +61,8 @@ class User extends Authenticatable implements HasMedia {
     const ADMIN = 'admin';
     const MANAGER = 'manager';
 
-    public function userRole() {
+    public function userRole()
+    {
         return $this->belongsTo(Roles::class, 'role_id');
     }
 
@@ -68,8 +70,8 @@ class User extends Authenticatable implements HasMedia {
     {
         if ($roomId != null) {
             return ChatMission::where('room_id', $roomId)
-            ->orderBy('id', 'desc')
-            ->first();
+                ->orderBy('id', 'desc')
+                ->first();
         }
         return null;
     }
@@ -92,79 +94,75 @@ class User extends Authenticatable implements HasMedia {
 
         return $chatRooms;
     }
-public function getRoomsByParticipants($authId)
-{
-    return DB::table('chat_room')
-        ->whereIn('room_id', function ($query) use ($authId) {
-            $query->select('room_id')
-                ->from('chat_room')
-                ->where('user_id', $authId)
-                ->orWhere(function ($query) {
-                    $query->select('room_id')
-                        ->from('chat_room')
-                        ->groupBy('room_id')
-                        ->havingRaw('COUNT(DISTINCT user_id) >= 3');
-                });
-        })
-        ->groupBy('room_id')
-        ->havingRaw('COUNT(DISTINCT user_id) >= 2')
-        ->pluck('room_id');
-}
-public function getRoomsBySearchParams($authId, $searchTerm)
-{
- 
-    // lấy tất cả các row user join chat room group by room id và điều kiện là room id đó phải có 2 row chứa cả 2 user id: auth user id và user id
-    // - lấy phòng có 2 người
-    $users = User::where('name', 'like', '%' . $searchTerm . '%')
-    ->leftJoin('chat_room AS cr1', function ($join) use ($authId) {
-        $join->on('users.id', '=', 'cr1.user_id')
-            ->where('cr1.room_id', 'IN', function ($query) use ($authId) {
+    public function getRoomsByParticipants($authId)
+    {
+        return DB::table('chat_room')
+            ->whereIn('room_id', function ($query) use ($authId) {
                 $query->select('room_id')
                     ->from('chat_room')
-                    ->where('user_id', $authId);
-            });
-    })
-    ->leftJoin('chat_room AS cr2', function ($join) use ($authId) {
-        $join->on('users.id', '=', 'cr2.user_id')
-            ->whereNull('cr2.room_id');
-    })
-    ->select('users.*')
-    ->where(function ($query) use ($authId) {
-        $query->whereNotNull('cr1.user_id')
-            ->orWhereNull('cr2.user_id')
-            ->orWhereNotIn('users.id', [$authId]);
-    })
-    ->get();
-    if ($users->isEmpty()) {
-        $chatRooms = ChatRoom::where('room_name', 'like', '%' . $searchTerm . '%')
-        ->leftJoin('users', 'chat_room.user_id', '=', 'users.id')
-        ->select('chat_room.room_id', 'users.*','chat_room.room_name as name')
-        ->groupBy('chat_room.room_id')
-        ->get();
-
-
-        foreach ($chatRooms as $chatRoom) {
-            $roomId = $chatRoom->room_id;
-            $chatRoom['users'] = ChatRoom::where('room_id', $roomId)->get();
-        }
-        $chatRooms['room_type'] = 'group';
-        return $chatRooms;
-
-    // dd($chatRooms);
+                    ->where('user_id', $authId)
+                    ->orWhere(function ($query) {
+                        $query->select('room_id')
+                            ->from('chat_room')
+                            ->groupBy('room_id')
+                            ->havingRaw('COUNT(DISTINCT user_id) >= 3');
+                    });
+            })
+            ->groupBy('room_id')
+            ->havingRaw('COUNT(DISTINCT user_id) >= 2')
+            ->pluck('room_id');
     }
+    public function getRoomsBySearchParams($authId, $searchTerm)
+    {
+
+        // lấy tất cả các row user join chat room group by room id và điều kiện là room id đó phải có 2 row chứa cả 2 user id: auth user id và user id
+        // - lấy phòng có 2 người
+        $users = User::where('name', 'like', '%' . $searchTerm . '%')
+            ->leftJoin('chat_room AS cr1', function ($join) use ($authId) {
+                $join->on('users.id', '=', 'cr1.user_id')
+                    ->where('cr1.room_id', 'IN', function ($query) use ($authId) {
+                        $query->select('room_id')
+                            ->from('chat_room')
+                            ->where('user_id', $authId);
+                    });
+            })
+            ->leftJoin('chat_room AS cr2', function ($join) use ($authId) {
+                $join->on('users.id', '=', 'cr2.user_id')
+                    ->whereNull('cr2.room_id');
+            })
+            ->select('users.*')
+            ->where(function ($query) use ($authId) {
+                $query->whereNotNull('cr1.user_id')
+                    ->orWhereNull('cr2.user_id')
+                    ->orWhereNotIn('users.id', [$authId]);
+            })
+            ->get();
+        if ($users->isEmpty()) {
+            $chatRooms = ChatRoom::where('room_name', 'like', '%' . $searchTerm . '%')
+                ->leftJoin('users', 'chat_room.user_id', '=', 'users.id')
+                ->select('chat_room.room_id', 'users.*', 'chat_room.room_name as name')
+                ->groupBy('chat_room.room_id')
+                ->get();
 
 
-    return $users;
-}
-public function getRoomLatestChat($room_id)
-{
-    $latestChat = DB::table('chat')
-        ->where('room_id', $room_id)
-        ->orderBy('created_at', 'desc')
-        ->first();
+            foreach ($chatRooms as $chatRoom) {
+                $roomId = $chatRoom->room_id;
+                $chatRoom['users'] = ChatRoom::where('room_id', $roomId)->get();
+            }
+            $chatRooms['room_type'] = 'group';
+            return $chatRooms;
 
-    return $latestChat;
-}
+    
+        }
+        return $users;
+    }
+    public function getRoomLatestChat($room_id)
+    {
+        $latestChat = DB::table('chat')
+            ->where('room_id', $room_id)
+            ->orderBy('created_at', 'desc')
+            ->first();
 
-
+        return $latestChat;
+    }
 }

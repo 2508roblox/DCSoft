@@ -134,8 +134,14 @@ foreach ($users as $user) {
 $first_room_id = null;
 foreach ($users as $user) {
     if (!empty($user->chatRoom)) {
-        $first_room_id = $user->chatRoom->room_id;
+        if (isset($user->chatRoom[0])) {
+            $first_room_id = $user->chatRoom[0]->room_id;
         break;
+        }else {
+            $first_room_id = $user->chatRoom->room_id;
+            break;
+        }
+
     }
 }
 $spec_room = ChatRoom::where('room_id', $first_room_id)->first();
