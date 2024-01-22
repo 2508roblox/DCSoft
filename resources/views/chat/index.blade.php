@@ -345,6 +345,7 @@
 
                                 @isset($chats)
                                     @forelse ($chats as $chat)
+
                                         @if ($chat->sender_id != Auth::user()->id)
                                             <li class="clearfix">
                                                 <div class="chat-avatar">
@@ -355,11 +356,23 @@
                                                 <div class="conversation-text">
                                                     <div class="ctext-wrap">
                                                         <i>{{ $chat->name }}</i>
+
+
+                                                        @isset($chat->file_url)
+                                                        <a href="{{$chat->file_url}}" download="">
+                                                            <p>
+                                                                {{ $chat->note }}
+                                                            </p>
+                                                        </a>
+                                                        @else
                                                         <p>
                                                             {{ $chat->note }}
                                                         </p>
+                                                        @endisset
+
                                                     </div>
                                                 </div>
+
                                                 <div class="conversation-actions dropdown">
                                                     <button class="btn btn-sm btn-link text-reset" data-bs-toggle="dropdown"
                                                         aria-expanded="false"><i
@@ -382,9 +395,17 @@
                                                 <div class="conversation-text">
                                                     <div class="ctext-wrap">
                                                         <i>{{ Auth::user()->name }}</i>
+                                                        @isset($chat->file_url)
+                                                        <a href="{{$chat->file_url}}" download="">
+                                                            <p>
+                                                                {{ $chat->note }}
+                                                            </p>
+                                                        </a>
+                                                        @else
                                                         <p>
                                                             {{ $chat->note }}
                                                         </p>
+                                                        @endisset
                                                     </div>
                                                 </div>
                                                 <div class="conversation-actions dropdown">
@@ -425,16 +446,28 @@
                                                 <div class="col mb-2 mb-sm-0">
                                                     <input type="hidden" name="room_id" value="{{ $room_id ?? null }}">
 
-                                                    <input type="text" name="note" class="form-control border-0"
-                                                        placeholder="Enter your text" required="">
+                                                    <input type="file" name="file_chat" id="file_chat" hidden>
+                                                    <input type="text" name="note" id="note" class="form-control border-0" placeholder="Enter your text" required="">
                                                     <div class="invalid-feedback mt-2">
                                                         Please enter your messsage
                                                     </div>
                                                 </div>
+
+<script>
+    const fileInput = document.getElementById('file_chat');
+    const noteInput = document.getElementById('note');
+
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            noteInput.value = file.name;
+        }
+    });
+</script>
                                                 <div class="col-sm-auto">
                                                     <div class="btn-group">
-                                                        <a href="#" class="btn btn-light"><i
-                                                                class="fe-paperclip"></i></a>
+                                                        <label for="file_chat" href="#" class="btn btn-light"><i
+                                                                class="fe-paperclip"></i></label>
                                                         <div class="d-grid">
                                                             <button type="submit" class="btn btn-success chat-send"><i
                                                                     class='fe-send'></i></button>

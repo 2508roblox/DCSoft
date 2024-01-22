@@ -5,9 +5,13 @@ namespace App\Models;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\MediaLibrary\HasMedia;
 
-
-class ChatMission extends Model {
+class ChatMission extends Model implements HasMedia
+ {
+    use HasFactory, InteractsWithMedia;
     public static $rules = [
     ];
 

@@ -26,9 +26,28 @@ class ChatRoom extends Model
     public function getChatsInRoomModel($room_id)
     {
 
-        $chats = ChatMission::where('room_id', $room_id)
-            ->join('users', 'chat.sender_id', '=', 'users.id')
-            ->get();
+        $chats=  ChatMission::where('room_id', $room_id)
+        ->join('users', 'chat.sender_id', '=', 'users.id')
+        ->select('chat.*', 'users.name')
+        ->get();
+
+
+        foreach ($chats as $chat) {
+            if ($chat->getFirstMedia('chat_files' ) != null) {
+                $media = $chat->getFirstMedia('chat_files' )->getFullUrl();
+                if ($media) {
+                    $fileUrl = $media ;
+                    $chat->file_url = $fileUrl;
+                } else {
+                    $chat->file_url = null;
+                }
+
+            }else {
+
+                $chat->file_url = null;
+            }
+}
+
         $usersInRoom = [];
         //get room info
         $latestChat = DB::table('chat')

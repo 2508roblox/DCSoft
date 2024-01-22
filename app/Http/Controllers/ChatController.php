@@ -168,6 +168,12 @@ $searchUsers = $users->sortByDesc(function ($user) {
             'room_id' =>  $request->input('room_id'),
             'note' =>  $request->input('note')
         ]);
+
+        if ($request->has('file_chat')) {
+            $newChatMission->addMediaFromRequest('file_chat')->toMediaCollection('chat_files');
+      
+        }
+
         return redirect()->back();
     }
     public function createRoomBy2UserId($user_id, $auth_user_id, $room_id)

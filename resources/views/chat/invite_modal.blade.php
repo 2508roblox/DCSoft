@@ -17,7 +17,7 @@
                     <!-- Thêm danh sách người dùng vào đây -->
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button id="close_button" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-primary">Save changes</button>
                 </div>
             </form>
@@ -93,7 +93,8 @@
     },
               success: function(response) {
                   // Xử lý thành công
-                  console.log(response);
+                  $('#close_button').click();
+                  location.reload(); // Tải lại trang
               },
               error: function(xhr, status, error) {
                   // Xử lý lỗi
@@ -104,64 +105,4 @@
   });
   </script>
   <!-- CSS -->
-<style>
-    /* Style cho modal header */
-    .modal-header {
-        background-color: #f8f9fa;
-        border-bottom: none;
-    }
 
-    /* Style cho modal title */
-    .modal-title {
-        margin: 0;
-        color: #000;
-    }
-
-    /* Style cho modal body */
-    .modal-body {
-        padding: 20px;
-    }
-
-    /* Style cho checkbox và label */
-    .modal-body input[type="checkbox"] {
-        display: none;
-    }
-
-    .modal-body label {
-        display: block;
-        margin-bottom: 10px;
-        cursor: pointer;
-    }
-
-    .modal-body label:hover {
-        background-color: #f2f2f2;
-    }
-
-    /* Thay đổi style của input checkbox khi được chọn */
-    .modal-body input[type="checkbox"]:checked + label {
-        background-color: #f2f2f2;
-    }
-
-    /* Tùy chỉnh style của input checkbox */
-    .modal-body input[type="checkbox"] + label:before {
-        content: "";
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-right: 5px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        vertical-align: middle;
-        background-color: #fff;
-    }
-
-    /* Tùy chỉnh style của input checkbox khi được chọn */
-    .modal-body input[type="checkbox"]:checked + label:before {
-        background-color: #007bff;
-    }
-
-    /* Tùy chỉnh style của input checkbox khi được chọn và hover */
-    .modal-body input[type="checkbox"]:checked + label:hover:before {
-        background-color: #0056b3;
-    }
-</style>
