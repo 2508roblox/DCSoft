@@ -70,25 +70,36 @@
 
 
                                     <div data-simplebar style="max-height: 498px">
-                                        {{-- own chat room --}}
+                                        {{-- room list --}}
+                                        {{-- room list in home page --}}
+                                        {{-- @dd(get_defined_vars()) --}}
                                         @isset($userRooms)
-
                                             @forelse ($userRooms as $roomId  =>  $room)
                                                 <a href="{{ route('chat.room', ['room_id' => $roomId ?? mt_rand()]) }}"
                                                     class="text-body">
                                                     <div class="d-flex align-items-start p-2">
                                                         <div class="position-relative">
                                                             <span class="user-status"></span>
-                                                            <img src="/assets/images/users/avatar-2.jpg"
-                                                                class="me-2 rounded-circle" height="42" alt="user" />
+                                                            {{-- avatar --}}
+
+                                                            <?php
+                                                            $otherUserAvarta = '';
+                                                            foreach ($room['users'] as $userObj) {
+                                                                if ($userObj->id != Auth::user()->id) {
+                                                                    $otherUserAvarta = $userObj->avatar_url;
+                                                                }
+                                                            }
+                                                            ?>
+                                                            <img src="{{ $otherUserAvarta }}" class="me-2 rounded-circle"
+                                                                height="42" width="42" alt="user" />
                                                         </div>
                                                         <div class="flex-1">
                                                             <h5 class="mt-0 mb-0 font-14">
                                                                 <span class="float-end text-muted fw-normal font-12">
                                                                     @if (isset($room['latest_chat']->created_at))
-                                                                    {{ \Carbon\Carbon::parse($room['latest_chat']->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
+                                                                        {{ \Carbon\Carbon::parse($room['latest_chat']->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
                                                                     @else
-                                                                    {{ \Carbon\Carbon::parse($room->latestChat->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
+                                                                        {{ \Carbon\Carbon::parse($room->latestChat->created_at ?? '0')->setTimezone('Asia/Ho_Chi_Minh')->format('h:i A') ?? '00:00' }}
                                                                     @endif
                                                                 </span>
                                                                 {{-- room name --}}
@@ -147,11 +158,10 @@
 
                                         @isset($sortedUsers)
                                             @forelse ($sortedUsers as $user)
-                                            @if (  $user->id == Auth::user()->id)
-                                            @continue
-                                           @endif
+                                                @if ($user->id == Auth::user()->id)
+                                                    @continue
+                                                @endif
                                                 <a href="{{ route('chat.room', ['room_id' => $user ?? mt_rand()]) }}"
-
                                                     class="text-body">
                                                     <div class="d-flex align-items-start p-2">
                                                         <div class="position-relative">
@@ -202,28 +212,29 @@
                                                 <p>Nothing</p>
                                             @endforelse
                                         @endisset
-                                        {{-- search public room --}} {{-- search private chat room --}}
 
+
+                                        {{-- search public rooms list --}} {{-- search private chat rooms --}}
                                         @isset($searchUsers)
+                                            {{-- @dd(get_defined_vars()) --}}
 
 
-                                        @if (!isset($searchUsers[0]))
-                                        <p>User Not Found</p>
-
-                                        @endif
+                                            @if (!isset($searchUsers[0]))
+                                                <p>User Not Found</p>
+                                            @endif
+                                            {{-- loop --}}
                                             @forelse ($searchUsers as $user)
-                                            {{-- search user list --}}
+                                                {{-- search user list --}}
 
-                                          @if( isset($user['id']) && $user['id'] == Auth::user()->id)
-                                             @continue
-                                          @else
-
-                                          @endif
-                                           @if (!isset($user->id) ?? $user->id == Auth::user()->id)
-                                            @continue
-                                           @endif
+                                                @if (isset($user['id']) && $user['id'] == Auth::user()->id)
+                                                    @continue
+                                                @else
+                                                @endif
+                                                @if (!isset($user->id) ?? $user->id == Auth::user()->id)
+                                                    @continue
+                                                @endif
                                                 <?php
-                                                 $roomId = $user->chatRoom[0]->room_id ??$user->chatRoom->room_id ?? null;
+                                                $roomId = $user->chatRoom[0]->room_id ?? ($user->chatRoom->room_id ?? null);
                                                 ?>
 
 
@@ -236,11 +247,10 @@
                                                     @continue
                                                 @endif
                                                 @if (isset($user->chatRoom[0]) && !isset($user['room_type']))
-
                                                     <a href="{{ route('chat.room', ['room_id' => $roomId]) }}"
                                                         class="text-body">
                                                     @elseif(!isset($user['room_type']))
-                                                    {{-- search new user => create new room --}}
+                                                        {{-- search new user => create new room --}}
 
                                                         <a href="{{ route('chat.room', ['room_id' => $roomId, 'otherId' => $user->id]) }}"
                                                             class="text-body">
@@ -248,8 +258,9 @@
                                                 <div class="d-flex align-items-start p-2">
                                                     <div class="position-relative">
                                                         <span class="user-status"></span>
-                                                        <img src="/assets/images/users/avatar-2.jpg" class="me-2 rounded-circle"
-                                                            height="42" alt="user" />
+                                                        <img src="{{ $user->avatar_url ?? '/assets/images/users/avatar-2.jpg' }}"
+                                                            class="me-2 rounded-circle" height="42" width="42"
+                                                            alt="user" />
                                                     </div>
                                                     <div class="flex-1">
                                                         <h5 class="mt-0 mb-0 font-14">
@@ -312,56 +323,64 @@
                 <!-- chat area -->
                 <div class="col-xl-9 col-lg-8">
                     {{-- @isset($otherUser) --}}
+                    @if (isset($userRooms[$room_id]) && $userRooms[$room_id]['users'] && count($userRooms[$room_id]['users']) > 2)
+                        @php
+                            $room_cover_image = null;
+                            $userNames = '';
+
+                            foreach ($userRooms[$room_id]['users'] as $index => $user) {
+                                $userName = $user->name;
+                                $userNames .= $userName . ', ';
+                            }
+
+                            $userNames = rtrim($userNames, ', ');
+
+                            $roomNameByRoomId = $userNames;
+                            $room_name_dom = '<a href="contacts-profile.html" class="text-reset">' . ($roomNameByRoomId ?? $searchUsers[0]->name) . '</a>';
+                        @endphp
+                    @else
+                        @if (isset($usersInRoom) && $usersInRoom)
+                            @php
+                                $userNames = '';
+
+                                foreach ($usersInRoom[$room_id]['users'] as $user) {
+                                    if (isset($user->id)) {
+                                        $other_id = $user->id;
+                                    } else {
+                                        $other_id = $_GET['otherId'] ?? $roomName;
+                                    }
+
+                                    if ($other_id != Auth::user()->id && isset($user->name)) {
+                                        $userNames .= $user->name . ', ';
+                                        $room_cover_image = $user->avatar_url;
+                                    } else {
+                                        $userNames = $roomNameByRoomId;
+                                    }
+
+                                    $userNames = rtrim($userNames, ', ');
+                                }
+                                $room_name_dom = '<a href="contacts-profile.html" class="text-reset">' . $userNames . '</a>';
+                            @endphp
+                        @elseif (isset($roomNameByRoomId) && $roomNameByRoomId != '' && !$usersInRoom[0]->name)
+                            @php
+                                $room_name_dom = '<a href="contacts-profile.html" class="text-reset">' . $roomNameByRoomId . '</a>';
+                            @endphp
+                        @else
+                            @php
+                                $room_name_dom = '<a href="contacts-profile.html" class="text-reset">' . (isset($searchUsers[0]) ? $roomNameByRoomId ?? $searchUsers[0]->name : 'Not Found') . '</a>';
+                            @endphp
+                        @endif
+                    @endif
                     <div class="card">
                         <div class="card-body py-2 px-3 border-bottom border-light">
                             <div class="d-flex py-1">
-                                <img src="/assets/images/users/avatar-5.jpg" class="me-2 rounded-circle" height="36"
-                                    alt="Brandon Smith">
+                                <img src="{{ $room_cover_image ?? '/assets/images/users/avatar-basic.jpg' }}"
+                                    class="me-2 rounded-circle" height="36" width="36" alt="Brandon Smith">
                                 <div class="flex-1">
                                     <h5 class="mt-0 mb-0 font-15">
-                                        @if (isset($userRooms[$room_id]) && $userRooms[$room_id]['users'] && count($userRooms[$room_id]['users']) > 2)
-                                        <?php
-                                        $userNames = '';
-
-                                        foreach ($userRooms[$room_id]['users'] as $index => $user) {
-                                            $userName = $user->name;
-                                            $userNames .= $userName . ', ';
-                                        }
-
-                                        $userNames = rtrim($userNames, ', ');
-
-                                        $roomNameByRoomId = $userNames;
-                                        ?>
-                                        <a href="contacts-profile.html" class="text-reset">{{ $roomNameByRoomId ?? $searchUsers[0]->name }}</a>
-                                    @else
-                                        @if (isset($usersInRoom) && $usersInRoom )
-
-                                            <?php
-                                            $userNames = '';
-                                            foreach ($usersInRoom[$room_id]['users']  as $user) {
-                                                if (isset($user->id)) {
-                                                    # code...
-                                                  $other_id =  $user->id;
-                                                }else {
-                                                    $other_id = $_GET['otherId']  ?? $roomName ;
-                                                }
-
-                                                if ($other_id != Auth::user()->id && isset( $user->name )) {
-                                                    $userNames .= $user->name . ', ';
-                                                }else {
-
-                                                    $userNames =   $roomNameByRoomId;
-                                                }
-                                                $userNames = rtrim($userNames, ', ');
-                                            }
-                                            ?>
-                                            <a href="contacts-profile.html" class="text-reset">{{ $userNames }}</a>
-                                        @elseif (isset($roomNameByRoomId) && $roomNameByRoomId != '' && !$usersInRoom[0]->name)
-                                            <a href="contacts-profile.html" class="text-reset">{{ $roomNameByRoomId }}</a>
-                                        @else
-                                            <a href="contacts-profile.html" class="text-reset">{{ isset($searchUsers[0]) ? $roomNameByRoomId ?? $searchUsers[0]->name : 'Not Found' }}</a>
-                                        @endif
-                                    @endif
+                                        @php
+                                            echo $room_name_dom;
+                                        @endphp
                                     </h5>
                                     <p class="mt-1 mb-0 text-muted font-12">
                                         <small class="mdi mdi-circle text-success"></small> Online
@@ -381,15 +400,13 @@
                         <div class="card-body">
                             <ul class="conversation-list chat-app-conversation" id="chat-container" data-simplebar
                                 style="max-height: 460px">
-
+                                {{-- Chat section  --}}
                                 @isset($chats)
                                     @forelse ($chats as $chat)
-
                                         @if ($chat->sender_id != Auth::user()->id)
                                             <li class="clearfix">
                                                 <div class="chat-avatar">
-                                                    <img src="/assets/images/users/avatar-5.jpg" class="rounded"
-                                                        alt="James Z" />
+                                                    <img src="{{ $chat->avatar_url ?? '/assets/images/users/avatar-basic.jpg' }}" class="rounded" alt="James Z" />
                                                     <i>{{ \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->hour . ':' . \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->minute ?? '00:00 ' }}</i>
                                                 </div>
                                                 <div class="conversation-text">
@@ -398,15 +415,15 @@
 
 
                                                         @isset($chat->file_url)
-                                                        <a href="{{$chat->file_url}}" download="">
+                                                            <a href="{{ $chat->file_url }}" download="">
+                                                                <p>
+                                                                    {{ $chat->note }}
+                                                                </p>
+                                                            </a>
+                                                        @else
                                                             <p>
                                                                 {{ $chat->note }}
                                                             </p>
-                                                        </a>
-                                                        @else
-                                                        <p>
-                                                            {{ $chat->note }}
-                                                        </p>
                                                         @endisset
 
                                                     </div>
@@ -427,23 +444,23 @@
                                         @else
                                             <li class="clearfix odd">
                                                 <div class="chat-avatar">
-                                                    <img src="/assets/images/users/avatar-1.jpg" class="rounded"
-                                                        alt="Nik Patel" />
+                                                    <img src="{{ $chat->avatar_url ?? '/assets/images/users/avatar-basic.jpg' }}" class="rounded" height="42"
+                                                        width="42" alt="Nik Patel" />
                                                     <i>{{ \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->hour . ':' . \Carbon\Carbon::parse($chat->created_at)->setTimezone('Asia/Ho_Chi_Minh')->minute ?? '00:00 ' }}</i>
                                                 </div>
                                                 <div class="conversation-text">
                                                     <div class="ctext-wrap">
                                                         <i>{{ Auth::user()->name }}</i>
                                                         @isset($chat->file_url)
-                                                        <a href="{{$chat->file_url}}" download="">
+                                                            <a href="{{ $chat->file_url }}" download="">
+                                                                <p>
+                                                                    {{ $chat->note }}
+                                                                </p>
+                                                            </a>
+                                                        @else
                                                             <p>
                                                                 {{ $chat->note }}
                                                             </p>
-                                                        </a>
-                                                        @else
-                                                        <p>
-                                                            {{ $chat->note }}
-                                                        </p>
                                                         @endisset
                                                     </div>
                                                 </div>
@@ -483,26 +500,29 @@
                                             <div class="row">
                                                 <div class="col mb-2 mb-sm-0">
 
-                                                    <input type="hidden" name="room_id" value="{{ $room_id != 0 ?  $room_id  :  $roomId ?? null }}">
+                                                    <input type="hidden" name="room_id"
+                                                        value="{{ $room_id != 0 ? $room_id : $roomId ?? null }}">
 
                                                     <input type="file" name="file_chat" id="file_chat" hidden>
-                                                    <input type="text" name="note" id="note" class="form-control border-0" placeholder="Enter your text" required="">
+                                                    <input type="text" name="note" id="note"
+                                                        class="form-control border-0" placeholder="Enter your text"
+                                                        required="">
                                                     <div class="invalid-feedback mt-2">
                                                         Please enter your messsage
                                                     </div>
                                                 </div>
 
-<script>
-    const fileInput = document.getElementById('file_chat');
-    const noteInput = document.getElementById('note');
+                                                <script>
+                                                    const fileInput = document.getElementById('file_chat');
+                                                    const noteInput = document.getElementById('note');
 
-    fileInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            noteInput.value = file.name;
-        }
-    });
-</script>
+                                                    fileInput.addEventListener('change', function() {
+                                                        const file = this.files[0];
+                                                        if (file) {
+                                                            noteInput.value = file.name;
+                                                        }
+                                                    });
+                                                </script>
                                                 <div class="col-sm-auto">
                                                     <div class="btn-group">
                                                         <label for="file_chat" href="#" class="btn btn-light"><i

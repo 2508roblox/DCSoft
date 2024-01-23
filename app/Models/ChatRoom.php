@@ -26,27 +26,32 @@ class ChatRoom extends Model
     public function getChatsInRoomModel($room_id)
     {
 
-        $chats=  ChatMission::where('room_id', $room_id)
-        ->join('users', 'chat.sender_id', '=', 'users.id')
-        ->select('chat.*', 'users.name')
-        ->get();
-        
+        $chats =  ChatMission::where('room_id', $room_id)
+            ->join('users', 'chat.sender_id', '=', 'users.id')
+            ->select('chat.*', 'users.name')
+            ->get();
+        foreach ($chats as $chat) {
+            $user = User::find($chat->sender_id);
+            $avatarUrl = $user->getAvatarUrl($user);
+            // Thực hiện các thao tác khác với $avatarUrl
+            $chat->avatar_url = $avatarUrl;
+            // Thực hiện các thao tác khác với $avatarUrl
+        }
 
         foreach ($chats as $chat) {
-            if ($chat->getFirstMedia('chat_files' ) != null) {
-                $media = $chat->getFirstMedia('chat_files' )->getFullUrl();
+            if ($chat->getFirstMedia('chat_files') != null) {
+                $media = $chat->getFirstMedia('chat_files')->getFullUrl();
                 if ($media) {
-                    $fileUrl = $media ;
+                    $fileUrl = $media;
                     $chat->file_url = $fileUrl;
                 } else {
                     $chat->file_url = null;
                 }
-
-            }else {
+            } else {
 
                 $chat->file_url = null;
             }
-}
+        }
 
         $usersInRoom = [];
         //get room info
@@ -60,7 +65,14 @@ class ChatRoom extends Model
             ->where('chat_room.room_id', $room_id)
             ->select('users.*', 'chat_room.room_name as room_name')
             ->get();
-
+            //get avatar
+            foreach ($usersInRoom as $user) {
+                $user_model = User::find($user->id);
+                $avatarUrl = $user_model->getAvatarUrl($user_model);
+                // Thực hiện các thao tác khác với $avatarUrl
+                $user->avatar_url = $avatarUrl;
+                // Thực hiện các thao tác khác với $avatarUrl
+            }
         $usersInRoom = [
             $room_id => [
                 'latest_chat' => $latestChat,

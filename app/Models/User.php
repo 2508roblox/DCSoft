@@ -163,4 +163,17 @@ class User extends Authenticatable implements HasMedia
 
         return $latestChat;
     }
+    public function getAvatarUrl($user)
+    {
+
+        $avatar = $user->getFirstMedia('avatar');
+        $hasAvatar = $user->hasMedia('avatar');
+        if ($hasAvatar) {
+         return    $avatar->getUrl();
+        } else {
+            return '/assets/images/users/avatar-basic.jpg';
+            // Xử lý tương ứng tại đây
+        }
+
+    }
 }

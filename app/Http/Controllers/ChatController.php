@@ -43,15 +43,22 @@ class ChatController extends BaseController
                     ->where('chat_room.room_id', $roomId)
                     ->select('users.*', 'chat_room.room_name as room_name')
                     ->get();
-
+                    foreach ($userRoom as $user) {
+                        $user_model = User::find($user->id);
+                        $avatarUrl = $user_model->getAvatarUrl($user_model);
+                        // Thực hiện các thao tác khác với $avatarUrl
+                        $user->avatar_url =$avatarUrl;
+                    }
                 $userRooms[$roomId] = [
                     'latest_chat' => $latestChat,
                     'users' => $userRoom
                 ];
             }
 
-            // get Chats in first room
-
+            //sort rooms and get Chats in first room
+            $userRooms = collect($userRooms)->sortByDesc(function ($user) {
+                return optional($user['latest_chat']->created_at ?? null);
+            })->toArray();
             if ($room_id_param) {
                 # code...
                 $first_room_id = $room_id_param;
@@ -59,6 +66,7 @@ class ChatController extends BaseController
                 $keys = array_keys($userRooms);
                 $first_key = reset($keys);
                 $first_room_id = $first_key;
+
             }
 
 
@@ -73,6 +81,7 @@ class ChatController extends BaseController
             }
 
             $chatsInRoom = $spec_room != null ?  $spec_room->getChatsInRoomModel(intval($first_room_id)) ?? null : null  ;
+
             if ($first_room_id != 0) {
                 # code...
                 $chats = $chatsInRoom != null ? $chatsInRoom['chats'] : [];
@@ -80,9 +89,7 @@ class ChatController extends BaseController
                 $room_id  = $chatsInRoom  != null ? $chatsInRoom['room_id'] : $room_id_param;
                 $roomNameByRoomId = $chatsInRoom  != null ? $chatsInRoom['roomNameByRoomId'] : null;
                 //short room by latest chats
-                $userRooms = collect($userRooms)->sortByDesc(function ($user) {
-                    return optional($user['latest_chat']->created_at ?? null);
-                });
+
             } else {
                 $chats = [];
                 $usersInRoom = null;
@@ -143,6 +150,14 @@ class ChatController extends BaseController
                     }
 
                 }
+                // get user, room cover image
+                foreach ($users as $user) {
+                    $user_model = User::find($user->id);
+                    $avatarUrl = $user_model->getAvatarUrl($user_model);
+                    // Thực hiện các thao tác khác với $avatarUrl
+                    $user->avatar_url =$avatarUrl;
+                }
+
                 // get first room
                 $first_room_id = null;
                 foreach ($users as $user) {
@@ -161,6 +176,7 @@ class ChatController extends BaseController
 
                 $chatsInRoom = $spec_room->getChatsInRoomModel(intval($first_room_id)) ?? null;
                 $chats = $chatsInRoom['chats'] ?? [];
+
                 $searchUsers = $users->sortByDesc(function ($user) {
                     return optional($user->latestChat->id ?? null);
                 });
