@@ -83,14 +83,14 @@
                                                             {{-- avatar --}}
 
                                                             <?php
-                                                            $otherUserAvarta = '';
+                                                            $otherUserAvarta = null;
                                                             foreach ($room['users'] as $userObj) {
-                                                                if ($userObj->id != Auth::user()->id) {
+                                                                if ($userObj->id != Auth::user()->id && count($room['users'] )  == 2 ) {
                                                                     $otherUserAvarta = $userObj->avatar_url;
                                                                 }
                                                             }
                                                             ?>
-                                                            <img src="{{ $otherUserAvarta }}" class="me-2 rounded-circle"
+                                                            <img src="{{ $otherUserAvarta ?? '/assets/images/users/avatar-basic.jpg'  }}" class="me-2 rounded-circle"
                                                                 height="42" width="42" alt="user" />
                                                         </div>
                                                         <div class="flex-1">
@@ -374,7 +374,7 @@
                     <div class="card">
                         <div class="card-body py-2 px-3 border-bottom border-light">
                             <div class="d-flex py-1">
-                                <img src="{{ $room_cover_image ?? '/assets/images/users/avatar-basic.jpg' }}"
+                                <img src="{{ $room_cover_image ?? $searchUsers[0]->avatar_url ?? '/assets/images/users/avatar-basic.jpg' }}"
                                     class="me-2 rounded-circle" height="36" width="36" alt="Brandon Smith">
                                 <div class="flex-1">
                                     <h5 class="mt-0 mb-0 font-15">
