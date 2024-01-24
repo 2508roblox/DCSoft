@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +56,7 @@ class TaskController extends BaseController
 				}
 			}
 		} else {
+
 			$data['arTasks'] = Tasks::with('tasksAssignTo')
 				->with('tasksCreatedBy')
 				->with('tasksApprovedBy')
@@ -95,11 +97,21 @@ class TaskController extends BaseController
 					// Xử lý tương ứng tại đây
 				}
 			}
+			$data['arTasks_child'] = Tasks::with('tasksAssignTo')
+				->with('tasksCreatedBy')
+				->with('tasksApprovedBy')
+				->get()
+				->keyBy('id')
+				->toArray();
+
+			// dd($data['arTasks']);
+
+
 			// dd($data['arTasks_user']);
 		}
 		// dd($data['arTasks']);
 
-
+		// dd($data['notifications']);
 
 		$data['arProject'] = Projects::get()->pluck('name', 'id')->toArray();
 		$data['user_id'] = $user->id;
@@ -117,7 +129,16 @@ class TaskController extends BaseController
 
 
 		$data['task'] = Tasks::with('tasksAssignTo')->with('tasksCreatedBy')->with('tasksApprovedBy')->where('id', '=', $request->id)->get()->toArray();
-		// dd($data['task']);
+		// dd($data['role']);
+
+
+		if ($data['role'] != 'admin' && $user->id != $data['task'][0]['tasks_assign_to']['id'] && $user->id != $data['task'][0]['tasks_approved_by']['id']) {
+			return redirect()->route('task.index');
+		}
+
+
+
+
 		$data['project_id'] =  $data['task'][0]['project_id'];
 		// $data['arChildTasks'] = Tasks::with('tasksAssignTo')->with('tasksCreatedBy')->with('tasksApprovedBy')->where('parent_id', '=', $request->id)->get()->toArray();
 		$data['arChildTasks'] = Tasks::with('tasksAssignTo')->with('tasksCreatedBy')->with('tasksApprovedBy')->where('parent_id', '=', 0)->get()->keyBy('id')->toArray();
@@ -158,7 +179,7 @@ class TaskController extends BaseController
 			->where('task_id', $request->id)
 			->where('reply_id', 0)
 			->orderBy('created_at', 'desc')
-			->take(TaskComment::LIMIT_COMMENTS)
+			->take(3)
 			->get();
 
 		// Chuyển đổi múi giờ và định dạng thời gian cho mỗi TaskComment
@@ -206,8 +227,7 @@ class TaskController extends BaseController
 	{
 		$user = Auth::user();
 		$data['role']  = Roles::where('id', $user->role_id)->value('code');
-
-		if ($data['role'] != 'admin') {
+		if ($data['role'] !== 'admin') {
 			return redirect()->back();
 		}
 		$data['users'] = User::get()->pluck('name', 'id')->toArray();
@@ -232,11 +252,9 @@ class TaskController extends BaseController
 	{
 		$user = Auth::user();
 		$data['role']  = Roles::where('id', $user->role_id)->value('code');
-		
-		if ($data['role'] != 'admin') {
+		if ($data['role'] !== 'admin') {
 			return redirect()->back();
 		}
-
 		$data['task'] = Tasks::with('tasksAssignTo')->with('tasksCreatedBy')->with('tasksApprovedBy')->where('id', '=', $request->id)->get()->toArray();
 
 		$data['users'] = User::get()->pluck('name', 'id')->toArray();
@@ -248,7 +266,8 @@ class TaskController extends BaseController
 	}
 
 
-	public function update(Request $request) {
+	public function update(Request $request)
+	{
 		if (empty($request->task['id'])) {
 			$taskId = Tasks::create(array(
 				"project_id" => $request->task["project_id"],
@@ -283,6 +302,9 @@ class TaskController extends BaseController
 
 	public function get_child_tasks(Request $request)
 	{
+		$user = Auth::user();
+		$data['role']  = Roles::where('id', $user->role_id)->value('code');
+		$data['arRoles'] = Roles::whereIn('code', [User::ADMIN, User::MANAGER])->get()->pluck('name', 'id')->toArray();
 		$id = $request->input('id');
 		$arTasks = Tasks::with('tasksAssignTo')
 			->with('tasksCreatedBy')
@@ -293,6 +315,7 @@ class TaskController extends BaseController
 			->toArray();
 
 		foreach ($arTasks as $taskId => $task) {
+
 			// Check if there are child tasks with parent_id = $taskId
 			$hasChildren = Tasks::where('parent_id', $taskId)->exists();
 
@@ -330,11 +353,10 @@ class TaskController extends BaseController
 			}
 		}
 
-		$html = view('tasks.render_child_tasks', ['arTasks' => $arTasks])->render();
+		$html = view('tasks.render_child_tasks', ['arTasks' => $arTasks, 'role' => $data['role']])->render();
 
 		return response()->json(['html' => $html], 200);
 	}
-	
 	public function upload_media(Request $request)
 	{
 		$user = Auth::user();

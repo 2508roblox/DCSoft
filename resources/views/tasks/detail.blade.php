@@ -1,21 +1,21 @@
 @extends('layouts.app')
 @section('content')
-    <div class="content">
+<div class="content">
+    {{-- @dd(get_defined_vars()); --}}
+    <!-- Start Content-->
+    <div class="container-fluid">
 
-        <!-- Start Content-->
-        <div class="container-fluid">
-
-            <!-- start page title -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box">
-                        <h4 class="page-title">{{ __('messages.task_detail') }}</h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">{{ __('messages.dcq') }}</a>
-                                </li>
-                                <li class="breadcrumb-item"><a
-                                        href="{{ route('task.index') }}">{{ __('messages.tasks') }}</a></li>
+        <!-- start page title -->
+        <div class="row">
+            <div class="col-12">
+                <div class="page-title-box">
+                    <h4 class="page-title">{{ __('messages.task_detail') }}</h4>
+                    <div class="page-title-right">
+                        <ol class="breadcrumb m-0">
+                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">{{ __('messages.dcq') }}</a>
+                            </li>
+                            <li class="breadcrumb-item"><a
+                                href="{{ route('task.index') }}">{{ __('messages.tasks') }}</a></li>
                                 <li class="breadcrumb-item active">{{ __('messages.task_detail') }}</li>
                             </ol>
                         </div>
@@ -28,30 +28,77 @@
                 <div class="col-xl-8">
                     <div class="card">
                         <div class="card-body">
-                            <div class="dropdown float-end">
-                                <a href="#" class="dropdown-toggle arrow-none text-muted" data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    <i class='mdi mdi-dots-horizontal font-18'></i>
-                                </a>
+                            <?php
+                            if ($task[0]['assign_to'] ==  $user_id ) {
+                                ?>
+                                <div class="dropdown float-end">
+                                    <a href="#" class="dropdown-toggle arrow-none text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class='mdi mdi-dots-horizontal font-18'></i>
+                                    </a>
 
-                                <div class="dropdown-menu dropdown-menu-end">
-                                    <!-- item-->
-                                    <a href="{{ route('task.add', $task[0]['id']) }}" class="dropdown-item">
-                                        <i class="fe-plus me-1"></i></i>Add child task
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#staticBackdrop_{{ $task[0]['id'] }}">Report</a>
+                                    </div>
+                                </div>
+                                <?php
+                            } elseif ($role == 'admin') {
+                                ?>
+
+                                <div class="dropdown float-end">
+                                    <a href="#" class="dropdown-toggle arrow-none text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class='mdi mdi-dots-horizontal font-18'></i>
                                     </a>
-                                    <!-- item-->
-                                    <a href="{{ route('task.edit', $task[0]['id']) }}" class="dropdown-item">
-                                        <i class='mdi mdi-pencil-outline me-1'></i>Edit
-                                    </a>
-                                    <!-- item-->
-                                    <a href="javascript:void(0);" class="dropdown-item">
-                                        <i class='mdi mdi-content-copy me-1'></i>Mark as Duplicate
-                                    </a>
-                                    <div class="dropdown-divider"></div>
-                                    <!-- item-->
-                                    <a href="javascript:void(0);" class="dropdown-item text-danger">
-                                        <i class='mdi mdi-delete-outline me-1'></i>Delete
-                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a class="dropdown-item" href="{{ route('user.edit', $task[0]['id']) }}">Edit</a>
+                                        <!-- <a type="button" class="dropdown-item">Delete</a> -->
+                                    </div>
+                                </div>
+                                <?php
+                            } else {
+
+                            }
+                            ?>
+
+
+                          <div class="modal fade" id="staticBackdrop_{{ $task[0]['id'] }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form method="post" id="task_form" accept-charset="UTF-8" enctype="multipart/form-data" action="{{ route('notifications.report_task') }}">
+                                            @csrf
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="staticBackdropLabel">Report task: {{ $task[0]['name'] }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+
+                                                <input type="text" name="task_id" value="{{ $task[0]['id'] }}" hidden class="form-control" />
+                                                <div class="mb-3">
+                                                    <label class="form-label">{{ __('messages.title') }}</label>
+                                                    <input type="text" name="title" class="form-control" value="">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">{{ __('messages.content') }}</label>
+                                                    <textarea name="content" id="editor_{{ $task[0]['id'] }}"></textarea>
+
+                                                    <script src="https://cdn.ckeditor.com/ckeditor5/34.1.0/classic/ckeditor.js"></script>
+                                                    <script>
+                                                        ClassicEditor
+                                                            .create(document.querySelector('#editor_{{ $task[0]['id'] }}'))
+                                                            .catch(error => {
+                                                                console.error(error);
+                                                            });
+                                                    </script>
+                                                </div>
+
+
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary">Send</button>
+                                            </div>
+                                        </form>
+
+                                    </div>
                                 </div>
                             </div>
                             <h4 class="mb-1"><?php echo $task[0]['name']; ?></h4>
@@ -239,7 +286,6 @@
                                             <th scope="col">Due Date</th>
                                             <th scope="col">Priority</th>
                                             <th scope="col">Status</th>
-                                            <th scope="col" style="width: 85px;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -262,7 +308,7 @@
                                             } else {
                                                 $classStatus = '';
                                             }
-                                            
+
                                             ?>
                                         <tr id="child_{{ $value['id'] }}"
                                             class="child_tasks_<?php echo $value['parent_id']; ?> child_tasks_level_<?php echo $value['level']; ?>">
@@ -286,7 +332,9 @@
                                             </td>
                                             <td>
                                                 <a class="<?php echo $classStatus; ?>"
-                                                    href="{{ route('task.detail', $value['id']) }}"><?php echo $value['name']; ?></a>
+                                                    href="{{ route('task.detail', $value['id']) }}">
+                                                    <?php echo strlen($value['name']) > 10 ? substr($value['name'], 0, 10) . '...' : $value['name']; ?>
+                                                </a>
                                             </td>
                                             <td>
                                                 <div>
@@ -295,7 +343,9 @@
                                                         class="avatar-sm img-thumbnail rounded-circle"
                                                         title="Houston Fritz" />
                                                     <a class="<?php echo $classStatus; ?>"
-                                                        href="{{ route('user.detail', $value['tasks_assign_to']['id']) }}"><?php echo $value['tasks_assign_to']['name']; ?></a>
+                                                        href="{{ route('user.detail', $value['tasks_assign_to']['id']) }}">
+                                                        <?php echo strlen($value['tasks_assign_to']['name']) > 10 ? substr($value['tasks_assign_to']['name'], 0, 10) . '...' : $value['tasks_assign_to']['name']; ?>
+                                                    </a>
                                                 </div>
                                             </td>
                                             <td>
@@ -310,31 +360,7 @@
                                                     <?php echo $value['status']; ?>
                                                 </span>
                                             </td>
-                                            <td>
-                                                <ul class="list-inline table-action m-0">
-                                                    <li class="list-inline-item">
-                                                        <a href="{{ route('task.edit', $value['id']) }}"
-                                                            class="action-icon px-1"> <i
-                                                                class="mdi mdi-square-edit-outline"></i></a>
-                                                    </li>
-                                                    <li class="list-inline-item">
-                                                        <div class="dropdown">
-                                                            <a class="action-icon px-1 dropdown-toggle" href="#"
-                                                                data-bs-toggle="dropdown" aria-haspopup="true"
-                                                                aria-expanded="false">
-                                                                <i class="mdi mdi-dots-vertical"></i>
-                                                            </a>
 
-                                                            <div class="dropdown-menu dropdown-menu-end">
-                                                                <a class="dropdown-item" href="#">Action</a>
-                                                                <a class="dropdown-item" href="#">Another action</a>
-                                                                <a class="dropdown-item" href="#">Something else
-                                                                    here</a>
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                </ul>
-                                            </td>
                                         </tr>
                                         <?php
                                         }

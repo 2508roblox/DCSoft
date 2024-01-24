@@ -8,24 +8,35 @@ return [
 	'vnd' => 'VNĐ',
 	'customer' => 'Customer',
 	'due_date' => 'Due date',
+	'entry_date' => 'Entry date',
 	'description' => 'Description',
 	'upload_file' => 'Upload file',
 	'dashboard' => 'Dashboard',
+	'total' => 'Total',
+	'type' => 'Type',
 	'login_error' => 'Wrong password or email',
+	'my_account' => 'My Account',
+	'logout' => 'Logout',
+	'welcome' => 'Welcome',
 
 	'chat' => 'Chat',
 
 	'revenue' => 'Revenue',
+	'revenue_add_new' => 'Add new revenue',
+	'revenue_edit' => 'Edit revenue',
 	'customer' => 'Customer',
-	
+
 	'title' => 'Title',
 	'notifications' => 'Notifications',
+	'notification_edit' => 'Edit Notification',
+	'notification_create' => 'Create Notification',
 	'receiver' => 'Receiver',
 	'content' => 'Content',
 
 	'projects' => 'Projects',
 	'project_add_new' => 'Add new project',
 	'project_edit' => 'Edit project',
+	'project_progress' => 'Progress',
 
 	'tasks' => 'Tasks',
 	'task_detail' => 'Task Detail',
@@ -45,7 +56,7 @@ return [
 	'skill_add_new' => 'Add new skill',
 	'skill_edit' => 'Edit skill',
 
-	'user_member_list' => 'Members List',
+	'user_member_list' => 'Members',
 	'user_add_new' => 'Add new member',
 	'user_edit' => 'Edit',
 	'user_name' => 'Name',

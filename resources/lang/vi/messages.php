@@ -8,14 +8,22 @@ return [
 	'vnd' => 'VNĐ',
 	'customer' => 'Khách hàng',
 	'due_date' => 'Ngày hết hạn',
+	'entry_date' => 'Ngày nhập',
 	'description' => 'Mô tả',
 	'upload_file' => 'Upload file',
 	'dashboard' => 'Tổng quát',
+	'total' => 'Tổng',
+	'type' => 'Kiểu',
 	'login_error' => 'Sai mật khẩu hoặc email',
+	'my_account' => 'Tài khoản của tôi',
+	'logout' => 'Thoát',
+	'welcome' => 'Chào mừng',
 
 	'chat' => 'Chat',
 
 	'revenue' => 'Doanh thu',
+	'revenue_add_new' => 'Thêm doanh thu',
+	'revenue_edit' => 'Sửa doanh thu',
 	'customer' => 'Khách hàng',
 
 	'title' => 'Tiêu đề',
@@ -26,6 +34,7 @@ return [
 	'projects' => 'Dự án',
 	'project_add_new' => 'Thêm mới dự án',
 	'project_edit' => 'Sửa dự án',
+	'project_progress' => 'Tiến độ',
 
 	'tasks' => 'Tasks',
 	'task_detail' => 'Chi tiết nhiệm vụ',
@@ -44,6 +53,8 @@ return [
 	'skills' => 'Kỹ năng',
 	'skill_add_new' => 'Thêm mới kỹ năng',
 	'skill_edit' => 'Sửa kỹ năng',
+	'notification_edit' => 'Sửa thông báo',
+	'notification_create' => 'Thêm mới thông báo',
 
 	'user_member_list' => 'Nhân sự',
 	'user_add_new' => 'Thêm nhân sự',

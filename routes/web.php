@@ -28,20 +28,6 @@ Route::get('logout', [UserController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
 	Route::get('dashboard', [HomeController::class, 'index'])->name('dashboard');
 
-	// Doanh thu
-	Route::get('revenue', [RevenueController::class, 'index'])->name('revenue.index');
-
-	// Khách hàng
-	Route::get('customers', [CustomerController::class, 'index'])->name('customer.index');
-	Route::get('customer/{id}/edit', [CustomerController::class, 'edit'])->name('customer.edit');
-
-
-	// Dự án
-	Route::get('projects', [ProjectsController::class, 'index'])->name('projects.index');
-	Route::get('project/add', [ProjectsController::class, 'add'])->name('project.add');
-	Route::post('project/update', [ProjectsController::class, 'update'])->name('project.update');
-	Route::get('project/{id}/edit', [ProjectsController::class, 'edit'])->name('project.edit');
-
 	// Nhiệm vụ
 	Route::get('tasks', [TaskController::class, 'index'])->name('task.index');
 	Route::get('tasks/{id}/edit', [TaskController::class, 'edit'])->name('task.edit');
@@ -51,9 +37,24 @@ Route::middleware(['auth'])->group(function () {
 	Route::post('tasks/get_child_tasks', [TaskController::class, 'get_child_tasks'])->name('task.get_child_tasks');
 	Route::post('tasks/upload_media', [TaskController::class, 'upload_media'])->name('task.upload_media');
 
-
-	//Kỹ năng
 	Route::middleware('admin')->group(function () {
+		// Khách hàng
+		Route::get('customers', [CustomerController::class, 'index'])->name('customer.index');
+		Route::get('customer/{id}/edit', [CustomerController::class, 'edit'])->name('customer.edit');
+
+		// Dự án
+		Route::get('projects', [ProjectsController::class, 'index'])->name('projects.index');
+		Route::get('project/add', [ProjectsController::class, 'add'])->name('project.add');
+		Route::post('project/update', [ProjectsController::class, 'update'])->name('project.update');
+		Route::get('project/{id}/edit', [ProjectsController::class, 'edit'])->name('project.edit');
+
+		// Doanh thu
+		Route::get('revenue', [RevenueController::class, 'index'])->name('revenue.index');
+		Route::get('revenue/add', [RevenueController::class, 'add'])->name('revenue.add');
+		Route::post('revenue/update', [RevenueController::class, 'update'])->name('revenue.update');
+		Route::get('revenue/{id}/edit', [RevenueController::class, 'edit'])->name('revenue.edit');
+
+		// Kỹ năng
 		Route::get('skill/add', [SkillController::class,'add'])->name('skill.add');
 		Route::post('skill/update', [SkillController::class,'update'])->name('skill.update');
 		Route::get('skill/{id}/edit', [SkillController::class,'edit'])->name('skill.edit');
@@ -82,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
 	Route::get('chat/room/{room_id}/members', [ChatController::class, 'getUsersNotInRoom'])->name('chat.newmembers');
 	Route::post('chat/room/{room_id}/members/add', [ChatController::class, 'addMembersToChatRoom'])->name('chat.addmembers');
 
+
 	//Notification
 	Route::get('notification/new', [NotificationController::class, 'getNewNotification'])->name('notification.new');
 	Route::get('notification/read', [UserHasNotificationController::class, 'markAsRead'])->name('notification.read');
@@ -91,4 +93,5 @@ Route::middleware(['auth'])->group(function () {
 	Route::put('notification/update', [NotificationController::class, 'update'])->name('notifications.update');
 	Route::post('notification/store', [NotificationController::class, 'store'])->name('notifications.store');
 	Route::get('notification/delete/{id}', [NotificationController::class, 'delete'])->name('notifications.delete');
+	Route::post('notification/report_task_user', [NotificationController::class, 'report_task_user'])->name('notifications.report_task');
 });

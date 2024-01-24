@@ -13,28 +13,45 @@ use Illuminate\Routing\Controller as BaseController;
 
 use App\Models\Projects;
 use App\Models\Customer;
+use App\Models\Roles;
 
 
 class ProjectsController extends BaseController {
+	const LIMIT = 20;
+
 	public function index(Request $request) {
-
-        $query = $request->input('search');
-
         $projectsQuery = Projects::with('projectCustomer');
 
-        if ($query) {
-            $projectsQuery->where('name', 'LIKE', '%' . $query . '%');
+        if ($request->input('search')) {
+            $projectsQuery->where('name', 'LIKE', '%' . $request->input('search') . '%');
+            $data['search'] = $request->input('search');
+        } else {
+        	$data['search'] = '';
         }
 
-        $projects = $projectsQuery->paginate(6);
+        if ($request->input('status') == 'showall') {
+        	$data['status'] = 'showall';
+        } elseif ($request->input('status')) {
+            $projectsQuery->where('status', '=', $request->input('status'));
+        	$data['status'] = $request->input('status');
+        } else {
+        	$projectsQuery->where('status', '=', 'inprogress');
+        	$data['status'] = 'inprogress';
+        }
 
-        $data['arProjects'] = $projects->keyBy('id')->toArray();
+        $projects = $projectsQuery->paginate(self::LIMIT);
+
+        $data['arProjects'] = $projects->keyBy('id')->sortBy('due_date')->toArray();
         $data['paginatePage'] = $projects;
+
+        $data['arProjectStatus'] = Projects::PROJECT_STATUS;
+
 		return view('projects.index', $data);
 	}
 
 	public function add() {
 		$data['arCustomer'] = Customer::get()->pluck('name', 'id')->toArray();
+		$data['arProjectStatus'] = Projects::PROJECT_STATUS;
 
 		return view('projects.add', $data);
 	}
@@ -43,6 +60,7 @@ class ProjectsController extends BaseController {
 		$data['arCustomer'] = Customer::get()->pluck('name', 'id')->toArray();
 		$data['project'] = Projects::with('projectCustomer')->where('id', '=', $request->id)->get()->toArray();
 		$data['arDoc'] = Projects::find($request->id)->getMedia('document');
+		$data['arProjectStatus'] = Projects::PROJECT_STATUS;
 
 		return view('projects.edit', $data);
 	}
@@ -70,6 +88,7 @@ class ProjectsController extends BaseController {
 			$project->customer_id = $request->project["customer_id"];
 			$project->due_date = $request->project["due_date"];
 			$project->status = $request->project["status"];
+			$project->progress = $request->project["progress"];
 
 			$project->save();
 
