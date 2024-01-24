@@ -54,7 +54,7 @@ class RevenueController extends BaseController {
 			))->id;
 		} else {
 			$project = Projects::find($request->project["id"]);
-			
+
 			$project->code = $request->project["code"];
 			$project->name = $request->project["name"];
 			$project->description = $request->project["description"];
