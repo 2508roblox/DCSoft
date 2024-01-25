@@ -176,4 +176,7 @@ class User extends Authenticatable implements HasMedia
         }
 
     }
+    public function isAdmin() {
+        return Auth::user()->role_id == 1;
+    }
 }

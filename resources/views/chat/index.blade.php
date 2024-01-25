@@ -415,6 +415,7 @@
 
 
                                                         @isset($chat->file_url)
+                                                        <img src="{{$chat->file_url}}"  alt="">
                                                             <a href="{{ $chat->file_url }}" download="">
                                                                 <p>
                                                                     {{ $chat->note }}
@@ -452,10 +453,12 @@
                                                     <div class="ctext-wrap">
                                                         <i>{{ Auth::user()->name }}</i>
                                                         @isset($chat->file_url)
+
                                                             <a href="{{ $chat->file_url }}" download="">
                                                                 <p>
                                                                     {{ $chat->note }}
                                                                 </p>
+                                                                <img class="rounded-lg" src="{{$chat->file_url}}" width="300px"  alt="">
                                                             </a>
                                                         @else
                                                             <p>

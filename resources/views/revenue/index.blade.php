@@ -193,7 +193,7 @@ console.log(parseInt(revenues[1]))
   parseInt(revenues[12])
 ],
                                 backgroundColor: [
-                                  'rgba(255, 61, 72, 1)',
+                                  ' rgba(0, 255, 145, 0.8)',
 
                                 ],
 
@@ -202,26 +202,26 @@ console.log(parseInt(revenues[1]))
                               {
                                 label: 'Expenses',
                                 data: [
-                                    parseInt(expenses[1]),
-                                    parseInt(expenses[2]),
-                                    parseInt(expenses[3]),
-                                    parseInt(expenses[4]),
-                                    parseInt(expenses[5]),
-                                    parseInt(expenses[6]),
-                                    parseInt(expenses[7]),
-                                    parseInt(expenses[8]),
-                                    parseInt(expenses[9]),
-                                    parseInt(expenses[10]),
-                                    parseInt(expenses[11]),
-                                    parseInt(expenses[12])
+                                    parseInt(-1*expenses[1]),
+                                    parseInt(-1*expenses[2]),
+                                    parseInt(-1*expenses[3]),
+                                    parseInt(-1*expenses[4]),
+                                    parseInt(-1*expenses[5]),
+                                    parseInt(-1*expenses[6]),
+                                    parseInt(-1*expenses[7]),
+                                    parseInt(-1*expenses[8]),
+                                    parseInt(-1*expenses[9]),
+                                    parseInt(-1*expenses[10]),
+                                    parseInt(-1*expenses[11]),
+                                    parseInt(-1*expenses[12])
 
 ],
                                 borderColor: [
-                                  'rgba(0, 255, 145, 0.8)',
+                                  'rgba(255, 61, 72, 1)',
 
                                 ],
                                 backgroundColor: [
-                                  'rgba(0, 255, 145, 0.8)',
+                                'rgba(255, 61, 72, 1)',
 
                                 ],
                                 borderWidth: 1
