@@ -415,8 +415,8 @@
 
 
                                                         @isset($chat->file_url)
-                                                        <img src="{{$chat->file_url}}"  alt="">
-                                                            <a href="{{ $chat->file_url }}" download="">
+                                                        <img src="{{$chat->file_url}}"  alt=""  width="300px">
+                                                            <a  href="{{ $chat->file_url }}" target="_blank">
                                                                 <p>
                                                                     {{ $chat->note }}
                                                                 </p>
@@ -454,7 +454,7 @@
                                                         <i>{{ Auth::user()->name }}</i>
                                                         @isset($chat->file_url)
 
-                                                            <a href="{{ $chat->file_url }}" download="">
+                                                            <a href="{{ $chat->file_url }}"  target="_blank" >
                                                                 <p>
                                                                     {{ $chat->note }}
                                                                 </p>

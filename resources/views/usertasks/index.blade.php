@@ -50,46 +50,37 @@
             </div>
 
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+            <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js" defer></script>
             <script>
-
-var tasks_statistic = JSON.parse('<?php echo $tasksJson; ?>')
-
+                var tasks_statistic = JSON.parse('<?php echo $tasksJson; ?>')
 
 
                 // config
                 const config = {
 
-  type: 'doughnut',
-  data: {
-    datasets: [
-      {
-        data: [tasks_statistic['to do'], tasks_statistic['complete'], tasks_statistic['awaiting confirmation'], tasks_statistic['overdue']],
-        backgroundColor: [
-          'rgba(0, 102, 255, 0.8)',
-          'rgba(0, 255, 0, 1)',
-          'rgb(255, 165, 0)',
-          'rgb(255, 0, 0)',
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [tasks_statistic['to do'], tasks_statistic['complete'], tasks_statistic[
+                                'awaiting confirmation'], tasks_statistic['overdue']],
+                            backgroundColor: [
+                                'rgba(0, 102, 255, 0.8)',
+                                'rgba(0, 255, 0, 1)',
+                                'rgb(255, 165, 0)',
+                                'rgb(255, 0, 0)',
 
-        ],
-      },
-    ],
-    labels: ['Todo', 'Complete', 'Awaiting Confirmation','Overdue'],
-  },
-  options: {
-    plugins: {
-      datalabels: {
-        formatter: (value) => {
-          return value + '%';
-        },
-      },
-    },
+                            ],
+                        }, ],
+                        labels: ['Todo', 'Complete', 'Awaiting Confirmation', 'Overdue'],
+                    },
+                    options: {
 
-  },
+                    },
 
                 };
 
                 // render init block
+
                 const myChart = new Chart(
                     document.getElementById('myChart'),
                     config
